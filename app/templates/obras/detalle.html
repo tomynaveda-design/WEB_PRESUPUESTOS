@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-800">{{ obra.nombre }}</h1>
+        <p class="text-gray-600 mt-1">{{ obra.descripcion }}</p>
+    </div>
+    <div class="flex space-x-2 items-center">
+        <a href="{{ url_for('obras.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">Volver</a>
+        
+        <form action="{{ url_for('obras.importar_excel', id=obra.id) }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2 bg-blue-50 p-1 rounded-lg border border-blue-200">
+            <input type="file" name="documento_excel" accept=".xlsx, .xls" required class="text-sm text-gray-700">
+            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">Subir Excel</button>
+        </form>
+
+        <a href="{{ url_for('obras.agregar_material', id=obra.id) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">+ Manual</a>
+    </div>
+</div>
+
+{% set total_costo = namespace(valor=0) %}
+{% for mat in obra.materiales %}
+    {% set mejor = mat.cotizacion_mas_barata() %}
+    {% if mejor %}
+        {% set total_costo.valor = total_costo.valor + mejor.precio_total %}
+    {% endif %}
+{% endfor %}
+
+<div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+        <p class="text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
+        <p class="text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial) }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
+        <p class="text-sm text-gray-500 font-semibold uppercase">Costo Estimado (Materiales)</p>
+        <p class="text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(total_costo.valor) }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+        <p class="text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
+        <p class="text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial - total_costo.valor) }}</p>
+    </div>
+</div>
+
+<div class="bg-white shadow-md rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-800 text-white">
+            <tr>
+                <th class="px-4 py-3 text-left font-medium uppercase tracking-wider">Cód</th>
+                <th class="px-4 py-3 text-left font-medium uppercase tracking-wider">Artículo</th>
+                <th class="px-4 py-3 text-left font-medium uppercase tracking-wider">Marca</th>
+                <th class="px-4 py-3 text-center font-medium uppercase tracking-wider">Cant</th>
+                <th class="px-4 py-3 text-center font-medium uppercase tracking-wider">Etapa</th>
+                <th class="px-4 py-3 text-left font-medium uppercase tracking-wider">Mejor Opción (Prov)</th>
+                <th class="px-4 py-3 text-right font-medium uppercase tracking-wider">Precio Unit.</th>
+                <th class="px-4 py-3 text-right font-medium uppercase tracking-wider">Total</th>
+                <th class="px-4 py-3 text-center font-medium uppercase tracking-wider">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for material in obra.materiales %}
+            <tr>
+                <td class="px-4 py-3 text-gray-500">{{ material.codigo }}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">{{ material.articulo }}</td>
+                <td class="px-4 py-3 text-gray-500">{{ material.marca }}</td>
+                <td class="px-4 py-3 text-center">{{ material.cantidad_presupuestada }} {{ material.unidad_medida }}</td>
+                <td class="px-4 py-3 text-center">{{ material.etapa }}</td>
+                
+                <td class="px-4 py-3 text-left">
+                    {% set mejor_cot = material.cotizacion_mas_barata() %}
+                    {% if mejor_cot %}
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-semibold">{{ mejor_cot.proveedor.nombre }}</span>
+                    {% else %}
+                        <span class="text-gray-400 italic text-xs">Sin cotizar</span>
+                    {% endif %}
+                </td>
+                
+                <td class="px-4 py-3 text-right">
+                    {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_unitario) }} {% else %} - {% endif %}
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-gray-800">
+                    {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_total) }} {% else %} - {% endif %}
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <div class="flex items-center justify-center space-x-1">
+                        <a href="{{ url_for('obras.cotizar_material', material_id=material.id) }}" class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 text-xs font-semibold transition" title="Cotizar">Cotizar</a>
+                        <a href="{{ url_for('obras.editar_material', material_id=material.id) }}" class="bg-amber-100 text-amber-700 px-2 py-1 rounded hover:bg-amber-200 text-xs font-semibold transition" title="Editar">Editar</a>
+                        <form action="{{ url_for('obras.eliminar_material', material_id=material.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este material?');">
+                            <button type="submit" class="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 text-xs font-semibold transition" title="Eliminar">Eliminar</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="px-6 py-8 text-center text-gray-500">
+                    <p class="text-lg mb-2">No hay materiales cargados en esta obra.</p>
+                    <p class="text-sm">Subí tu archivo Excel arriba a la derecha o hacé clic en "+ Manual" para empezar.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

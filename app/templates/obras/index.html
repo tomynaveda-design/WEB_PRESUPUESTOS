@@ -26,7 +26,7 @@
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="#" class="text-blue-600 hover:text-blue-900">Ver Detalle</a>
+                    <a href="{{ url_for('obras.detalle', id=obra.id) }}" class="text-blue-600 hover:text-blue-900 font-bold">Ver Planilla</a>
                 </td>
             </tr>
             {% else %}
