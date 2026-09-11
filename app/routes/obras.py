@@ -99,46 +99,83 @@ def eliminar_material(material_id):
 @obras_bp.route('/<int:id>/importar', methods=['POST'])
 def importar_excel(id):
     obra = Obra.query.get_or_404(id)
-    archivo = request.files.get('documento_excel')
+    # Detecta tanto 'documento_excel' como 'file' por si cambia el name del input en el HTML
+    archivo = request.files.get('documento_excel') or request.files.get('file')
     
-    if archivo:
-        try:
-            df = pd.read_excel(archivo)
-            df.columns = df.columns.str.strip().str.upper()
-            
-            for index, row in df.iterrows():
-                articulo = str(row.get('ARTÍCULO', row.get('ARTICULO', ''))).strip()
-                if not articulo or articulo == 'nan':
-                    continue
-                    
-                cantidad_raw = str(row.get('CANTIDAD', '0')).strip()
-                match = re.search(r'[\d\.]+', cantidad_raw)
-                cantidad_num = float(match.group()) if match else 0.0
-                
-                unidad_texto = re.sub(r'[\d\.]+', '', cantidad_raw).strip()
-                if not unidad_texto:
-                    unidad_texto = 'unidades'
-                    
-                codigo_raw = str(row.get('CODIGO', row.get('CÓDIGO', ''))).replace('.0', '').replace('nan', '')
-                marca_raw = str(row.get('MARCA', '')).replace('nan', '')
-                etapa_raw = str(row.get('ETAPA', '')).replace('nan', '')
+    if not archivo or archivo.filename == '':
+        flash('No se seleccionó ningún archivo de Excel.', 'danger')
+        return redirect(url_for('obras.detalle', id=obra.id))
 
-                nuevo_material = ObraMaterial(
-                    obra_id=obra.id,
-                    codigo=codigo_raw,
-                    articulo=articulo,
-                    marca=marca_raw,
-                    cantidad_presupuestada=cantidad_num,
-                    cantidad_disponible=cantidad_num,
-                    unidad_medida=unidad_texto,
-                    etapa=etapa_raw
-                )
-                db.session.add(nuevo_material)
+    try:
+        df = pd.read_excel(archivo)
+        # Normalizamos los nombres de las columnas
+        df.columns = [str(col).strip().upper() for col in df.columns]
+        
+        # Función auxiliar para buscar columnas con distintos nombres posibles
+        def obtener_valor(row, claves, por_defecto=""):
+            for clave in claves:
+                if clave in row and pd.notna(row[clave]):
+                    return str(row[clave]).strip()
+            return por_defecto
+
+        materiales_creados = 0
+
+        for index, row in df.iterrows():
+            # 1. ARTÍCULO
+            articulo = obtener_valor(row, ['ARTÍCULO', 'ARTICULO', 'DESCRIPCIÓN', 'DESCRIPCION', 'MATERIAL'])
+            if not articulo or articulo.lower() == 'nan':
+                continue
+                
+            # 2. CANTIDAD Y UNIDAD
+            cant_val = row.get('CANTIDAD', 0)
+            unidad_medida = obtener_valor(row, ['UNIDAD', 'UNIDAD DE MEDIDA', 'UNIDAD_MEDIDA', 'U.M.', 'UM', 'MEDIDA'])
             
-            db.session.commit()
-        except Exception as e:
-            print(f"Error al leer Excel: {e}")
-            
+            cantidad_num = 0.0
+            if isinstance(cant_val, (int, float)):
+                cantidad_num = float(cant_val) if pd.notna(cant_val) else 0.0
+            else:
+                cant_str = str(cant_val).replace(',', '.').strip()
+                match = re.search(r'[\d\.]+', cant_str)
+                if match:
+                    try:
+                        cantidad_num = float(match.group())
+                    except ValueError:
+                        cantidad_num = 0.0
+                
+                # Si la unidad no venía en columna propia, la buscamos en el texto de la cantidad
+                if not unidad_medida:
+                    unidad_extraida = re.sub(r'[\d\.]+', '', cant_str).strip()
+                    if unidad_extraida:
+                        unidad_medida = unidad_extraida
+
+            if not unidad_medida or unidad_medida.lower() == 'nan':
+                unidad_medida = 'Unidades'
+
+            # 3. OTROS CAMPOS
+            codigo = obtener_valor(row, ['CÓDIGO', 'CODIGO', 'COD']).replace('.0', '')
+            marca = obtener_valor(row, ['MARCA'])
+            etapa = obtener_valor(row, ['ETAPA', 'RUBRO', 'CATEGORIA'])
+
+            # Instanciamos sin 'cantidad_disponible' (que es una @property)
+            nuevo_material = ObraMaterial(
+                obra_id=obra.id,
+                codigo=codigo if codigo != 'nan' else '',
+                articulo=articulo,
+                marca=marca if marca != 'nan' else '',
+                cantidad_presupuestada=cantidad_num,
+                unidad_medida=unidad_medida,
+                etapa=etapa if etapa != 'nan' else ''
+            )
+            db.session.add(nuevo_material)
+            materiales_creados += 1
+
+        db.session.commit()
+        flash(f'¡Éxito! Se importaron {materiales_creados} materiales correctamente.', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al procesar el archivo: {str(e)}', 'danger')
+        
     return redirect(url_for('obras.detalle', id=obra.id))
 
 # Ruta para cargar los precios de los 3 proveedores de un material
