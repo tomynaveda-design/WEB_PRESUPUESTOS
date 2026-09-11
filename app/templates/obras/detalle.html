@@ -1,25 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mb-6 flex justify-between items-center">
+<!-- ENCABEZADO RESPONSIVO -->
+<div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
     <div>
-        <h1 class="text-3xl font-bold text-gray-800">{{ obra.nombre }}</h1>
-        <p class="text-gray-600 mt-1">{{ obra.descripcion }}</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ obra.nombre }}</h1>
+        <p class="text-gray-600 text-sm mt-1">{{ obra.descripcion }}</p>
     </div>
-    <div class="flex space-x-2 items-center">
-        <a href="{{ url_for('obras.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">Volver</a>
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ url_for('obras.index') }}" class="bg-gray-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-gray-600 transition">Volver</a>
         
         <form action="{{ url_for('obras.importar_excel', id=obra.id) }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2">
-            <!-- Selector de archivo con estilo limpio -->
             <input type="file" name="documento_excel" accept=".xlsx, .xls" required 
-                   class="text-sm text-gray-600 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-semibold file:bg-white file:text-gray-700 hover:file:bg-gray-100 cursor-pointer">
+                   class="text-xs sm:text-sm text-gray-600 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-semibold file:bg-white file:text-gray-700 hover:file:bg-gray-100 cursor-pointer">
             
-            <!-- Botón verde destacado -->
-            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-1.5">
-                <span>📊 Subir Excel</span>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm px-3 py-2 rounded-lg shadow-sm transition flex items-center space-x-1">
+                <span>📊 Excel</span>
             </button>
         </form>
 
-        <a href="{{ url_for('obras.agregar_material', id=obra.id) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">+ Manual</a>
+        <a href="{{ url_for('obras.agregar_material', id=obra.id) }}" class="bg-green-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm hover:bg-green-700 transition">+ Manual</a>
     </div>
 </div>
 
@@ -31,23 +30,25 @@
     {% endif %}
 {% endfor %}
 
-<div class="grid grid-cols-3 gap-4 mb-8">
+<!-- TARJETAS DE RESUMEN (1 Columna en Celular / 3 en Desktop) -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-        <p class="text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
-        <p class="text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial) }}</p>
+        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
+        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial) }}</p>
     </div>
     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-        <p class="text-sm text-gray-500 font-semibold uppercase">Costo Estimado (Materiales)</p>
-        <p class="text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(total_costo.valor) }}</p>
+        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Costo Estimado</p>
+        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(total_costo.valor) }}</p>
     </div>
     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-        <p class="text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
-        <p class="text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial - total_costo.valor) }}</p>
+        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
+        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial - total_costo.valor) }}</p>
     </div>
 </div>
 
+<!-- TABLA PRINCIPAL CON DESLIZAMIENTO HORIZONTAL EN CELULAR -->
 <div class="bg-white shadow-md rounded-lg overflow-x-auto mb-8">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
         <thead class="bg-gray-800 text-white">
             <tr>
                 <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Cód</th>
@@ -66,17 +67,16 @@
         <tbody class="bg-white divide-y divide-gray-200">
             {% for material in obra.materiales %}
             <tr>
-                <td class="px-3 py-3 text-gray-500">{{ material.codigo or '-' }}</td>
-                <td class="px-3 py-3 font-medium text-gray-900">
+                <td class="px-3 py-3 text-gray-500 whitespace-nowrap">{{ material.codigo or '-' }}</td>
+                <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">
                     {{ material.articulo }}
                     {% if material.marca %}
                         <span class="text-xs text-gray-400 block">({{ material.marca }})</span>
                     {% endif %}
                 </td>
-                <td class="px-3 py-3 text-center">{{ material.cantidad_presupuestada }} {{ material.unidad_medida }}</td>
+                <td class="px-3 py-3 text-center whitespace-nowrap">{{ material.cantidad_presupuestada }} {{ material.unidad_medida }}</td>
                 
-                <!-- Comprado -->
-                <td class="px-3 py-3 text-center">
+                <td class="px-3 py-3 text-center whitespace-nowrap">
                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold 
                         {% if material.estado_compra == 'Completado' %}bg-green-100 text-green-800
                         {% elif material.estado_compra == 'Parcial' %}bg-yellow-100 text-yellow-800
@@ -85,22 +85,19 @@
                     </span>
                 </td>
                 
-                <!-- Falta Comprar -->
-                <td class="px-3 py-3 text-center text-gray-600">
+                <td class="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
                     {{ material.falta_comprar }} {{ material.unidad_medida }}
                 </td>
 
-                <!-- Stock en Obra -->
-                <td class="px-3 py-3 text-center font-bold {% if material.cantidad_disponible == 0 %}text-red-500{% else %}text-green-600{% endif %}">
+                <td class="px-3 py-3 text-center font-bold whitespace-nowrap {% if material.cantidad_disponible == 0 %}text-red-500{% else %}text-green-600{% endif %}">
                     {{ material.cantidad_disponible }} {{ material.unidad_medida }}
                 </td>
 
-                <!-- Total Usado -->
-                <td class="px-3 py-3 text-center text-gray-600">
+                <td class="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
                     {{ material.total_usado }} {{ material.unidad_medida }}
                 </td>
                 
-                <td class="px-3 py-3 text-left">
+                <td class="px-3 py-3 text-left whitespace-nowrap">
                     {% set mejor_cot = material.cotizacion_mas_barata() %}
                     {% if mejor_cot %}
                         <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-semibold">{{ mejor_cot.proveedor.nombre }}</span>
@@ -109,8 +106,7 @@
                     {% endif %}
                 </td>
 
-                <!-- Precio Unitario -->
-                <td class="px-3 py-3 text-right text-gray-700">
+                <td class="px-3 py-3 text-right text-gray-700 whitespace-nowrap">
                     {% if mejor_cot %}
                         $ {{ "{:,.2f}".format(mejor_cot.precio_unitario) }}
                     {% else %}
@@ -118,13 +114,11 @@
                     {% endif %}
                 </td>
                 
-                <!-- Total Estimado -->
-                <td class="px-3 py-3 text-right font-bold text-gray-800">
+                <td class="px-3 py-3 text-right font-bold text-gray-800 whitespace-nowrap">
                     {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_total) }} {% else %} - {% endif %}
                 </td>
 
-                <!-- Acciones -->
-                <td class="px-3 py-3 text-center">
+                <td class="px-3 py-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center space-x-1">
                         <button onclick="document.getElementById('modalCompra{{ material.id }}').showModal()" class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 text-xs font-semibold transition" title="Registrar Compra">+ Compra</button>
                         <button onclick="document.getElementById('modalUso{{ material.id }}').showModal()" class="bg-sky-100 text-sky-700 px-2 py-1 rounded hover:bg-sky-200 text-xs font-semibold transition" title="Asentar Uso">- Uso</button>
@@ -136,8 +130,8 @@
                         </form>
                     </div>
 
-                    <!-- MODAL REGISTRAR COMPRA -->
-                    <dialog id="modalCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-full max-w-md">
+                    <!-- MODALES CON ANCHO ADAPTABLE A CELULAR (w-11/12 max-w-md) -->
+                    <dialog id="modalCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
                         <h3 class="text-lg font-bold text-gray-800 mb-2">Registrar Compra</h3>
                         <p class="text-sm text-gray-600 mb-4">{{ material.articulo }} (Falta: {{ material.falta_comprar }} {{ material.unidad_medida }})</p>
                         <form action="{{ url_for('materiales.registrar_compra', material_id=material.id) }}" method="POST">
@@ -152,8 +146,7 @@
                         </form>
                     </dialog>
 
-                    <!-- MODAL CORREGIR CANTIDAD COMPRADA -->
-                    <dialog id="modalEditarCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-full max-w-md">
+                    <dialog id="modalEditarCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
                         <h3 class="text-lg font-bold text-gray-800 mb-2">Corregir Compra Total</h3>
                         <p class="text-sm text-gray-600 mb-4">{{ material.articulo }}</p>
                         <form action="{{ url_for('materiales.editar_compra', material_id=material.id) }}" method="POST">
@@ -169,8 +162,7 @@
                         </form>
                     </dialog>
 
-                    <!-- MODAL USO -->
-                    <dialog id="modalUso{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-full max-w-md">
+                    <dialog id="modalUso{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
                         <h3 class="text-lg font-bold text-gray-800 mb-2">Asentar / Corregir Uso</h3>
                         <p class="text-sm text-gray-600 mb-2">{{ material.articulo }}</p>
                         <p class="text-xs text-gray-500 mb-4">Stock actual: {{ material.cantidad_disponible }} {{ material.unidad_medida }} | Usado acumulado: {{ material.total_usado }} {{ material.unidad_medida }}</p>
@@ -190,13 +182,12 @@
                             </div>
                         </form>
 
-                        <!-- BOTÓN PARA RESETEAR / BORRAR TODO EL USO A 0 -->
                         {% if material.total_usado > 0 %}
                         <div class="border-t border-gray-200 pt-3 flex justify-between items-center">
-                            <span class="text-xs text-red-600 font-semibold">¿Querés borrar todo el uso de este material?</span>
+                            <span class="text-xs text-red-600 font-semibold">¿Borrar historial de uso?</span>
                             <form action="{{ url_for('consumos.resetear_uso_material', material_id=material.id) }}" method="POST" onsubmit="return confirm('¿Confirmás eliminar todo el historial de uso para {{ material.articulo }}?');">
-                                <button type="submit" class="bg-red-100 text-red-700 border border-red-300 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition">
-                                    🗑️ Resetear Uso a 0
+                                <button type="submit" class="bg-red-100 text-red-700 border border-red-300 px-2 py-1 rounded text-xs font-bold hover:bg-red-200 transition">
+                                    🗑️ Resetear Uso
                                 </button>
                             </form>
                         </div>
@@ -207,8 +198,8 @@
             {% else %}
             <tr>
                 <td colspan="11" class="px-6 py-8 text-center text-gray-500">
-                    <p class="text-lg mb-2">No hay materiales cargados en esta obra.</p>
-                    <p class="text-sm">Subí tu archivo Excel arriba a la derecha o hacé clic en "+ Manual" para empezar.</p>
+                    <p class="text-base sm:text-lg mb-2">No hay materiales cargados en esta obra.</p>
+                    <p class="text-xs sm:text-sm">Subí tu archivo Excel arriba o hacé clic en "+ Manual" para empezar.</p>
                 </td>
             </tr>
             {% endfor %}
@@ -216,18 +207,18 @@
     </table>
 </div>
 
-<!-- HISTORIAL DE CONSUMOS EN OBRA -->
-<div class="bg-white shadow-md rounded-lg p-6">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Historial de Consumos en Obra</h2>
+<!-- HISTORIAL DE CONSUMOS -->
+<div class="bg-white shadow-md rounded-lg p-4 sm:p-6">
+    <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Historial de Consumos en Obra</h2>
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
             <thead class="bg-gray-100 text-gray-700">
                 <tr>
-                    <th class="px-4 py-2 text-left font-semibold">Fecha</th>
-                    <th class="px-4 py-2 text-left font-semibold">Material</th>
-                    <th class="px-4 py-2 text-center font-semibold">Cantidad Usada</th>
-                    <th class="px-4 py-2 text-left font-semibold">Notas / Observaciones</th>
-                    <th class="px-4 py-2 text-center font-semibold">Acciones</th>
+                    <th class="px-3 py-2 text-left font-semibold">Fecha</th>
+                    <th class="px-3 py-2 text-left font-semibold">Material</th>
+                    <th class="px-3 py-2 text-center font-semibold">Cantidad Usada</th>
+                    <th class="px-3 py-2 text-left font-semibold">Notas</th>
+                    <th class="px-3 py-2 text-center font-semibold">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -240,13 +231,13 @@
 
                 {% for reg in todos_los_usos | sort(attribute='fecha_uso', reverse=True) %}
                 <tr>
-                    <td class="px-4 py-2 text-gray-500">{{ reg.fecha_uso.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td class="px-4 py-2 font-semibold text-gray-800">{{ reg.obra_material.articulo }}</td>
-                    <td class="px-4 py-2 text-center text-blue-600 font-bold">- {{ reg.cantidad_usada }} {{ reg.obra_material.unidad_medida }}</td>
-                    <td class="px-4 py-2 text-gray-600">{{ reg.notas or 'Sin observaciones' }}</td>
-                    <td class="px-4 py-2 text-center">
-                        <form action="{{ url_for('consumos.eliminar_uso', uso_id=reg.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que querés eliminar este registro? El stock volverá a estar disponible.');">
-                            <button type="submit" class="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 text-xs font-semibold transition" title="Eliminar Consumo">
+                    <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{{ reg.fecha_uso.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td class="px-3 py-2 font-semibold text-gray-800 whitespace-nowrap">{{ reg.obra_material.articulo }}</td>
+                    <td class="px-3 py-2 text-center text-blue-600 font-bold whitespace-nowrap">- {{ reg.cantidad_usada }} {{ reg.obra_material.unidad_medida }}</td>
+                    <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ reg.notas or 'Sin observaciones' }}</td>
+                    <td class="px-3 py-2 text-center whitespace-nowrap">
+                        <form action="{{ url_for('consumos.eliminar_uso', uso_id=reg.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que querés eliminar este registro?');">
+                            <button type="submit" class="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 text-xs font-semibold transition">
                                 🗑️ Eliminar
                             </button>
                         </form>
@@ -255,7 +246,7 @@
                 {% else %}
                 <tr>
                     <td colspan="5" class="px-4 py-6 text-center text-gray-400 italic">
-                        No hay registros de consumos o asentamientos de uso hasta el momento.
+                        No hay registros de consumos hasta el momento.
                     </td>
                 </tr>
                 {% endfor %}
