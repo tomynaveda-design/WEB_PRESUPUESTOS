@@ -1,40 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Listado de Obras</h1>
-    <a href="{{ url_for('obras.crear') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">+ Nueva Obra</a>
+<!-- ENCABEZADO -->
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Listado de Obras</h1>
+        <p class="text-xs sm:text-sm text-gray-500 mt-1">Seleccioná una obra para gestionar sus materiales y presupuesto.</p>
+    </div>
+    <a href="{{ url_for('obras.crear') }}" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition text-center shadow">
+        + Nueva Obra
+    </a>
 </div>
 
-<div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Presupuesto Inicial</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            {% for obra in obras %}
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ obra.nombre }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-600">$ {{ obra.presupuesto_inicial }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {{ obra.estado }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="{{ url_for('obras.detalle', id=obra.id) }}" class="text-blue-600 hover:text-blue-900 font-bold">Ver Planilla</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="4" class="px-6 py-4 text-center text-gray-500">No hay obras registradas todavía.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<!-- GRILLA DE TARJETAS (1 columna en Celular / 2 en Tablet / 3 en Computadora) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for obra in obras %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition flex flex-col justify-between">
+        <div>
+            <!-- Nombre de la obra -->
+            <h2 class="text-lg font-bold text-gray-900 mb-3 leading-tight">
+                {{ obra.nombre }}
+            </h2>
+            
+            <!-- Recuadro destacado para el presupuesto -->
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
+                <p class="text-xs text-blue-700 font-semibold uppercase tracking-wider mb-0.5">Presupuesto Inicial</p>
+                <p class="text-xl sm:text-2xl font-extrabold text-blue-900 break-all">
+                    $ {{ "{:,.2f}".format(obra.presupuesto_inicial) }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Botón de acción touch (100% de ancho en celular) -->
+        <div class="pt-2 border-t border-gray-100">
+            <a href="{{ url_for('obras.detalle', id=obra.id) }}" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm py-2.5 px-4 rounded-lg text-center transition flex items-center justify-center gap-2 shadow-sm">
+                <span>📊 Ver Planilla de Obra</span>
+                <span>➡️</span>
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-span-full bg-white rounded-xl p-8 text-center text-gray-500 border border-gray-200 shadow-sm">
+        <p class="text-base mb-2">No hay obras registradas aún.</p>
+        <a href="{{ url_for('obras.crear') }}" class="text-blue-600 font-semibold underline text-sm">+ Crear la primera obra</a>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
