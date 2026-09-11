@@ -9,15 +9,15 @@
         <a href="{{ url_for('obras.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">Volver</a>
         
         <form action="{{ url_for('obras.importar_excel', id=obra.id) }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2">
-    <!-- Selector de archivo con estilo limpio -->
-    <input type="file" name="documento_excel" accept=".xlsx, .xls" required 
-           class="text-sm text-gray-600 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-semibold file:bg-white file:text-gray-700 hover:file:bg-gray-100 cursor-pointer">
-    
-    <!-- Botón verde destacado -->
-    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-1.5">
-        <span>📊 Subir Excel</span>
-    </button>
-</form>
+            <!-- Selector de archivo con estilo limpio -->
+            <input type="file" name="documento_excel" accept=".xlsx, .xls" required 
+                   class="text-sm text-gray-600 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-semibold file:bg-white file:text-gray-700 hover:file:bg-gray-100 cursor-pointer">
+            
+            <!-- Botón verde destacado -->
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                <span>📊 Subir Excel</span>
+            </button>
+        </form>
 
         <a href="{{ url_for('obras.agregar_material', id=obra.id) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">+ Manual</a>
     </div>
@@ -52,12 +52,13 @@
             <tr>
                 <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Cód</th>
                 <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Artículo</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Presup.</th>
+                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Cantidad</th>
                 <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Comprado</th>
                 <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Falta</th>
                 <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Stock Obra</th>
                 <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Usado</th>
                 <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Mejor Opción</th>
+                <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Precio Unit.</th>
                 <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Total Est.</th>
                 <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Acciones</th>
             </tr>
@@ -107,7 +108,17 @@
                         <span class="text-gray-400 italic text-xs">Sin cotizar</span>
                     {% endif %}
                 </td>
+
+                <!-- Precio Unitario -->
+                <td class="px-3 py-3 text-right text-gray-700">
+                    {% if mejor_cot %}
+                        $ {{ "{:,.2f}".format(mejor_cot.precio_unitario) }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 
+                <!-- Total Estimado -->
                 <td class="px-3 py-3 text-right font-bold text-gray-800">
                     {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_total) }} {% else %} - {% endif %}
                 </td>
@@ -195,7 +206,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                <td colspan="11" class="px-6 py-8 text-center text-gray-500">
                     <p class="text-lg mb-2">No hay materiales cargados en esta obra.</p>
                     <p class="text-sm">Subí tu archivo Excel arriba a la derecha o hacé clic en "+ Manual" para empezar.</p>
                 </td>
