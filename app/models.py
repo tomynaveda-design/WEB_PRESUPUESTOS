@@ -13,6 +13,23 @@ class Obra(db.Model):
     
     materiales = db.relationship('ObraMaterial', backref='obra', cascade='all, delete-orphan', lazy=True)
 
+    # --- PROPIEDADES DE FINANZAS DE LA OBRA ---
+    @property
+    def total_gastado(self):
+        """Suma de lo efectivamente gastado en compras reales."""
+        return sum(m.gasto_real for m in self.materiales)
+
+    @property
+    def total_estimado(self):
+        """Suma del costo total estimado si se comprara el 100% de lo presupuestado."""
+        return sum(m.costo_estimado_total for m in self.materiales)
+
+    @property
+    def saldo_disponible(self):
+        """Presupuesto inicial menos lo gastado en compras reales."""
+        presupuesto = float(self.presupuesto_inicial or 0.0)
+        return presupuesto - self.total_gastado
+
     def __repr__(self):
         return f"<Obra {self.nombre}>"
 
@@ -69,7 +86,23 @@ class ObraMaterial(db.Model):
             return None
         return min(self.cotizaciones, key=lambda c: c.precio_unitario)
 
-    # --- PROPIEDADES CALCULADAS ---
+    # --- PROPIEDADES CALCULADAS DE COSTO ---
+    @property
+    def gasto_real(self):
+        """Monto gastado en compras reales (cantidad_comprada * precio_unitario)."""
+        mejor = self.cotizacion_mas_barata()
+        if mejor and self.cantidad_comprada:
+            return float(mejor.precio_unitario) * float(self.cantidad_comprada)
+        return 0.0
+
+    @property
+    def costo_estimado_total(self):
+        """Monto estimado completo (cantidad_presupuestada * precio_unitario)."""
+        mejor = self.cotizacion_mas_barata()
+        if mejor:
+            return float(mejor.precio_total)
+        return 0.0
+
     @property
     def total_usado(self):
         return sum(reg.cantidad_usada for reg in self.registros_uso if reg.cantidad_usada)

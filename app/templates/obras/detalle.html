@@ -22,27 +22,22 @@
     </div>
 </div>
 
-{% set total_costo = namespace(valor=0) %}
-{% for mat in obra.materiales %}
-    {% set mejor = mat.cotizacion_mas_barata() %}
-    {% if mejor %}
-        {% set total_costo.valor = total_costo.valor + mejor.precio_total %}
-    {% endif %}
-{% endfor %}
-
-<!-- TARJETAS DE RESUMEN (1 Columna en Celular / 3 en Desktop) -->
+<!-- TARJETAS DE RESUMEN FINANCIERO -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
         <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
         <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial) }}</p>
     </div>
     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Costo Estimado</p>
-        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(total_costo.valor) }}</p>
+        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Total Gastado (Comprado)</p>
+        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.total_gastado) }}</p>
+        <p class="text-xs text-gray-400 mt-1">Est. total proyectado: $ {{ "{:,.2f}".format(obra.total_estimado) }}</p>
     </div>
     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
         <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
-        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial - total_costo.valor) }}</p>
+        <p class="text-xl sm:text-2xl font-bold {% if obra.saldo_disponible < 0 %}text-red-600{% else %}text-gray-800{% endif %}">
+            $ {{ "{:,.2f}".format(obra.saldo_disponible) }}
+        </p>
     </div>
 </div>
 
@@ -130,7 +125,7 @@
                         </form>
                     </div>
 
-                    <!-- MODALES CON ANCHO ADAPTABLE A CELULAR (w-11/12 max-w-md) -->
+                    <!-- MODALES CON ANCHO ADAPTABLE A CELULAR -->
                     <dialog id="modalCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
                         <h3 class="text-lg font-bold text-gray-800 mb-2">Registrar Compra</h3>
                         <p class="text-sm text-gray-600 mb-4">{{ material.articulo }} (Falta: {{ material.falta_comprar }} {{ material.unidad_medida }})</p>
