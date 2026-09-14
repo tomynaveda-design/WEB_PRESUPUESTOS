@@ -24,20 +24,42 @@
 
 <!-- TARJETAS DE RESUMEN FINANCIERO -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
-        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial) }}</p>
+    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 flex flex-col justify-between">
+        <div>
+            <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
+            <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
+        </div>
     </div>
-    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Total Gastado (Comprado)</p>
-        <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.total_gastado) }}</p>
-        <p class="text-xs text-gray-400 mt-1">Est. total proyectado: $ {{ "{:,.2f}".format(obra.total_estimado) }}</p>
+    
+    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500 flex flex-col justify-between">
+        <div>
+            <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Total Gastado (Comprado)</p>
+            <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.total_gastado).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
+        </div>
+        
+        <div class="mt-3 pt-3 border-t border-gray-100">
+            <div class="flex justify-between items-center mb-1">
+                <p class="text-xs text-gray-500" title="Total gastado + (Material faltante * Mejor cotización)">Est. total proyectado:</p>
+                <!-- Si el proyectado es mayor al presupuesto, se pone rojo -->
+                <p class="text-sm font-bold {% if obra.total_estimado > obra.presupuesto_inicial %}text-red-600{% else %}text-gray-700{% endif %}">
+                    $ {{ "{:,.2f}".format(obra.total_estimado).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                </p>
+            </div>
+            <!-- Barra de progreso: Gastado vs Estimado -->
+            {% set porcentaje = (obra.total_gastado / obra.total_estimado * 100) if obra.total_estimado > 0 else 0 %}
+            <div class="w-full bg-gray-200 rounded-full h-1.5" title="Gastado: {{ '{:.0f}'.format(porcentaje) }}%">
+                <div class="bg-red-500 h-1.5 rounded-full" style="width: {{ porcentaje }}%"></div>
+            </div>
+        </div>
     </div>
-    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-        <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
-        <p class="text-xl sm:text-2xl font-bold {% if obra.saldo_disponible < 0 %}text-red-600{% else %}text-gray-800{% endif %}">
-            $ {{ "{:,.2f}".format(obra.saldo_disponible) }}
-        </p>
+    
+    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500 flex flex-col justify-between">
+        <div>
+            <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
+            <p class="text-xl sm:text-2xl font-bold {% if obra.saldo_disponible < 0 %}text-red-600{% else %}text-gray-800{% endif %}">
+                $ {{ "{:,.2f}".format(obra.saldo_disponible).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+            </p>
+        </div>
     </div>
 </div>
 
@@ -103,14 +125,14 @@
 
                 <td class="px-3 py-3 text-right text-gray-700 whitespace-nowrap">
                     {% if mejor_cot %}
-                        $ {{ "{:,.2f}".format(mejor_cot.precio_unitario) }}
+                        $ {{ "{:,.2f}".format(mejor_cot.precio_unitario).replace(',', 'X').replace('.', ',').replace('X', '.') }}
                     {% else %}
                         -
                     {% endif %}
                 </td>
                 
                 <td class="px-3 py-3 text-right font-bold text-gray-800 whitespace-nowrap">
-                    {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_total) }} {% else %} - {% endif %}
+                    {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_total).replace(',', 'X').replace('.', ',').replace('X', '.') }} {% else %} - {% endif %}
                 </td>
 
                 <td class="px-3 py-3 text-center whitespace-nowrap">
