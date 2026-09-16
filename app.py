@@ -12,8 +12,8 @@ app = Flask(__name__, template_folder='app/templates', static_folder='app/static
 # Configuraciones
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu_clave_secreta_aqui')
 
-# CONFIGURACIÓN DE BASE DE DATOS (Usando la versión limpia con _v2 para forzar el esquema nuevo)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras_v2.db')
+# CONFIGURACIÓN DE BASE DE DATOS (Usando _v3 para garantizar un archivo 100% nuevo y limpio)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras_v3.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializar Base de Datos
