@@ -4,6 +4,7 @@ from app.extensions import db
 from app.routes.consumos import consumos_bp
 from app.routes.obras import obras_bp
 from app.routes.materiales import materiales_bp
+from app.routes.inventario import inventario_bp  # <-- 1. Importarlo acá
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
@@ -21,6 +22,11 @@ db.init_app(app)
 app.register_blueprint(consumos_bp)
 app.register_blueprint(obras_bp)
 app.register_blueprint(materiales_bp)
+app.register_blueprint(inventario_bp)  # <-- 2. Registrarlo acá
+
+# Crear tablas automáticamente al arrancar si no existen
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def home():
