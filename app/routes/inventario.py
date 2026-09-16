@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
 from app.models import InventarioGalpon
 
-inventario_bp = Blueprint('inventario', __name__, url_prefix='/inventario')
+inventario_bp = Blueprint('inventario', __name__)
 
-@inventario_bp.route('/')
+@inventario_bp.route('/inventario')
 def index():
     # Traemos los materiales ordenados por ID de forma ascendente (1, 2, 3...)
     materiales = InventarioGalpon.query.order_by(InventarioGalpon.id.asc()).all()
