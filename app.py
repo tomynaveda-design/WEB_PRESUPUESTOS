@@ -4,15 +4,16 @@ from app.extensions import db
 from app.routes.consumos import consumos_bp
 from app.routes.obras import obras_bp
 from app.routes.materiales import materiales_bp
-from app.routes.inventario import inventario_bp  # <-- 1. Importarlo acá
+from app.routes.inventario import inventario_bp
+from app.models import InventarioGalpon
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
 # Configuraciones
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras_v2.db')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu_clave_secreta_aqui')
 
-# CONFIGURACIÓN DE BASE DE DATOS (Toma la del .env o usa SQLite por defecto si no existe)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras.db')
+# CONFIGURACIÓN DE BASE DE DATOS (Usando la versión limpia con _v2 para forzar el esquema nuevo)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras_v2.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializar Base de Datos
@@ -22,7 +23,7 @@ db.init_app(app)
 app.register_blueprint(consumos_bp)
 app.register_blueprint(obras_bp)
 app.register_blueprint(materiales_bp)
-app.register_blueprint(inventario_bp)  # <-- 2. Registrarlo acá
+app.register_blueprint(inventario_bp)
 
 # Crear tablas automáticamente al arrancar si no existen
 with app.app_context():
