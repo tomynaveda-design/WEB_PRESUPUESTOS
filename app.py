@@ -5,12 +5,11 @@ from app.routes.consumos import consumos_bp
 from app.routes.obras import obras_bp
 from app.routes.materiales import materiales_bp
 from app.routes.inventario import inventario_bp  # <-- 1. Importarlo acá
-from app.models import InventarioGalpon  # <-- Agregá esta línea con tus imports
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
 # Configuraciones
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu_clave_secreta_aqui')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras_v2.db')
 
 # CONFIGURACIÓN DE BASE DE DATOS (Toma la del .env o usa SQLite por defecto si no existe)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras.db')
