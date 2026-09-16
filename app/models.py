@@ -1,8 +1,19 @@
 from datetime import datetime
 from app.extensions import db
 
+
+class InventarioGalpon(db.Model):
+    __tablename__ = 'inventario_galpon'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    articulo = db.Column(db.String(200), nullable=False)
+    cantidad = db.Column(db.Float, default=0.0)
+    observaciones = db.Column(db.String(255), nullable=True)
+    fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    
 class Obra(db.Model):
     __tablename__ = 'obras'
+    
+    # --- COLUMNAS ---
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(150), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
@@ -11,6 +22,8 @@ class Obra(db.Model):
     activo = db.Column(db.Boolean, default=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # --- RELACIONES ---
+    # cascade='all, delete-orphan' es lo que permite borrar la obra y todos sus materiales de un plumazo
     materiales = db.relationship('ObraMaterial', backref='obra', cascade='all, delete-orphan', lazy=True)
 
     # --- PROPIEDADES DE FINANZAS DE LA OBRA ---
@@ -51,7 +64,7 @@ class ObraMaterial(db.Model):
     __tablename__ = 'obra_material'
     id = db.Column(db.Integer, primary_key=True)
     obra_id = db.Column(db.Integer, db.ForeignKey('obras.id'), nullable=False)
-    codigo = db.Column(db.String(50), nullable=True)           
+    codigo = db.Column(db.String(50), nullable=True)          
     articulo = db.Column(db.String(150), nullable=False)       
     marca = db.Column(db.String(100), nullable=True)            
     cantidad_presupuestada = db.Column(db.Float, nullable=False, default=0.0) 

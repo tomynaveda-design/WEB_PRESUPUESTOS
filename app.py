@@ -10,21 +10,12 @@ app = Flask(__name__, template_folder='app/templates', static_folder='app/static
 # Configuraciones
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu_clave_secreta_aqui')
 
-# BASE DE DATOS FORZADA A SQLITE EN RENDER
-db_url = os.environ.get('DATABASE_URL', '')
-if not db_url or 'localhost' in db_url or '127.0.0.1' in db_url:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestion_obras.db'
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-
+# CONFIGURACIÓN DE BASE DE DATOS (Toma la del .env o usa SQLite por defecto si no existe)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gestion_obras.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializar Base de Datos
 db.init_app(app)
-
-# Crear tablas automáticamente si es SQLite
-with app.app_context():
-    db.create_all()
 
 # Registro de Blueprints
 app.register_blueprint(consumos_bp)

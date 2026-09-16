@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Encabezado y Botón -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">📦 Inventario de Galpón</h1>
+            <p class="text-sm text-gray-500">Control y gestión general de materiales y herramientas.</p>
+        </div>
+        <button onclick="document.getElementById('modalNuevo').showModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow transition">
+            + Cargar Material
+        </button>
+    </div>
+
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mb-4 p-4 rounded-lg text-sm {% if category == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+              {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Tabla tipo Planilla -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider border-b border-gray-200">
+                <tr>
+                    <th class="py-3 px-4 w-16 text-center">N°</th>
+                    <th class="py-3 px-4">Material / Descripción</th>
+                    <th class="py-3 px-4 w-32 text-center">Cantidad</th>
+                    <th class="py-3 px-4">Observaciones</th>
+                    <th class="py-3 px-4 w-28 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 text-sm">
+                {% for m in materiales %}
+                <tr class="hover:bg-gray-50">
+                    <!-- Formulario único por fila para actualizar Todo a la vez -->
+                    <form action="{{ url_for('inventario.actualizar', id=m.id) }}" method="POST">
+                        <!-- N° secuencial automático -->
+                        <td class="py-3 px-4 text-center font-semibold text-gray-600">{{ loop.index }}</td>
+                        
+                        <!-- Material / Descripción editable -->
+                        <td class="py-3 px-4">
+                            <input type="text" name="articulo" value="{{ m.articulo }}" required class="w-full border border-gray-300 rounded px-2 py-1 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </td>
+                        
+                        <!-- Cantidad editable -->
+                        <td class="py-3 px-4 text-center">
+                            <input type="number" step="0.01" name="cantidad" value="{{ m.cantidad }}" class="w-24 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </td>
+
+                        <!-- Observaciones editables -->
+                        <td class="py-3 px-4">
+                            <input type="text" name="observaciones" value="{{ m.observaciones or '' }}" placeholder="Sin observaciones" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </td>
+                        
+                        <!-- Acciones (Guardar cambios y Eliminar) -->
+                        <td class="py-3 px-4 text-center flex items-center justify-center gap-3">
+                            <button type="submit" class="text-green-600 hover:text-green-800 font-bold text-lg" title="Guardar cambios">💾</button>
+                    </form>
+                            <form action="{{ url_for('inventario.eliminar', id=m.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este ítem?');">
+                                <button type="submit" class="text-red-500 hover:text-red-700 font-medium" title="Eliminar">🗑️</button>
+                            </form>
+                        </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-8 text-gray-400">No hay materiales cargados en el galpón todavía.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para Cargar Material -->
+<dialog id="modalNuevo" class="p-0 rounded-xl shadow-2xl border-0 w-full max-w-md backdrop:bg-black/50">
+    <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Agregar Material al Inventario</h3>
+            <button onclick="document.getElementById('modalNuevo').close()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+        </div>
+        <form action="{{ url_for('inventario.agregar') }}" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Material / Descripción</label>
+                <input type="text" name="articulo" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Cantidad</label>
+                    <input type="number" step="0.01" name="cantidad" value="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Observaciones</label>
+                    <input type="text" name="observaciones" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button type="button" onclick="document.getElementById('modalNuevo').close()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg text-sm transition">Cancelar</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Guardar</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+{% endblock %}

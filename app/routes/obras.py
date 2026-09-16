@@ -3,8 +3,58 @@ import pandas as pd
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
 from app.models import Obra, ObraMaterial, Proveedor, CotizacionProveedor
+from app.models import InventarioGalpon
+
+inventario_bp = Blueprint('inventario', __name__)
+
+@inventario_bp.route('/inventario')
+def index():
+    # Traemos todos los materiales ordenados por el último actualizado
+    materiales = InventarioGalpon.query.order_by(InventarioGalpon.fecha_actualizacion.desc()).all()
+    return render_template('inventario/index.html', materiales=materiales)
+
+@inventario_bp.route('/inventario/agregar', methods=['POST'])
+def agregar():
+    codigo = request.form.get('codigo')
+    articulo = request.form.get('articulo')
+    cantidad = request.form.get('cantidad', 0, type=float)
+    unidad_medida = request.form.get('unidad_medida', 'Unidades')
+
+    if articulo:
+        nuevo_material = InventarioGalpon(
+            codigo=codigo,
+            articulo=articulo,
+            cantidad=cantidad,
+            unidad_medida=unidad_medida
+        )
+        db.session.add(nuevo_material)
+        db.session.commit()
+        flash('Material agregado al inventario.', 'success')
+        
+    return redirect(url_for('inventario.index'))
+
+@inventario_bp.route('/inventario/actualizar/<int:id>', methods=['POST'])
+def actualizar(id):
+    material = InventarioGalpon.query.get_or_404(id)
+    nueva_cantidad = request.form.get('cantidad', type=float)
+    
+    if nueva_cantidad is not None:
+        material.cantidad = nueva_cantidad
+        db.session.commit()
+        flash('Stock actualizado.', 'success')
+        
+    return redirect(url_for('inventario.index'))
+
+@inventario_bp.route('/inventario/eliminar/<int:id>', methods=['POST'])
+def eliminar(id):
+    material = InventarioGalpon.query.get_or_404(id)
+    db.session.delete(material)
+    db.session.commit()
+    flash('Material eliminado del inventario.', 'success')
+    return redirect(url_for('inventario.index'))
 
 obras_bp = Blueprint('obras', __name__)
+
 
 @obras_bp.route('/')
 def index():
@@ -31,6 +81,20 @@ def crear():
 
     return render_template('obras/crear.html')
 
+@obras_bp.route('/eliminar/<int:id>', methods=['POST']) 
+def eliminar_obra(id):
+    obra = Obra.query.get_or_404(id)
+    
+    try:
+        db.session.delete(obra)
+        db.session.commit()
+        flash('Obra eliminada con éxito.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error al eliminar la obra. Verificá que no tenga materiales asociados.', 'danger')
+        
+    return redirect(url_for('obras.index'))
+
 @obras_bp.route('/<int:id>')
 def detalle(id):
     obra = Obra.query.get_or_404(id)
@@ -47,7 +111,6 @@ def agregar_material(id):
             articulo=request.form.get('articulo'),
             marca=request.form.get('marca'),
             cantidad_presupuestada=float(request.form.get('cantidad')),
-            cantidad_disponible=float(request.form.get('cantidad')),
             unidad_medida=request.form.get('unidad_medida'),
             etapa=request.form.get('etapa')
         )
@@ -57,7 +120,7 @@ def agregar_material(id):
         
     return render_template('obras/agregar_material.html', obra=obra)
 
-# NUEVA RUTA: Editar Material
+# Ruta: Editar Material
 @obras_bp.route('/material/<int:material_id>/editar', methods=['GET', 'POST'])
 def editar_material(material_id):
     material = ObraMaterial.query.get_or_404(material_id)
@@ -69,7 +132,6 @@ def editar_material(material_id):
         
         nueva_cant = float(request.form.get('cantidad', 0))
         material.cantidad_presupuestada = nueva_cant
-        material.cantidad_disponible = nueva_cant
         material.unidad_medida = request.form.get('unidad_medida')
         material.etapa = request.form.get('etapa')
         
@@ -82,7 +144,7 @@ def editar_material(material_id):
         
     return render_template('obras/editar_material.html', material=material)
 
-# NUEVA RUTA: Eliminar Material
+# Ruta: Eliminar Material
 @obras_bp.route('/material/<int:material_id>/eliminar', methods=['POST'])
 def eliminar_material(material_id):
     material = ObraMaterial.query.get_or_404(material_id)
@@ -99,64 +161,69 @@ def eliminar_material(material_id):
 @obras_bp.route('/<int:id>/importar', methods=['POST'])
 def importar_excel(id):
     obra = Obra.query.get_or_404(id)
-    # Detecta tanto 'documento_excel' como 'file' por si cambia el name del input en el HTML
+    
+    print("--- INICIANDO IMPORTACIÓN ---")
+    print("ARCHIVOS EN REQUEST.FILES:", request.files)
+    
     archivo = request.files.get('documento_excel') or request.files.get('file')
     
     if not archivo or archivo.filename == '':
+        print("ERROR: No se encontró ningún archivo en la petición.")
         flash('No se seleccionó ningún archivo de Excel.', 'danger')
         return redirect(url_for('obras.detalle', id=obra.id))
 
+    print(f"ARCHIVO RECIBIDO: {archivo.filename}")
+
     try:
         df = pd.read_excel(archivo)
-        # Normalizamos los nombres de las columnas
+        # Normalizamos los nombres de las columnas (quitando espacios y pasando a mayúsculas)
         df.columns = [str(col).strip().upper() for col in df.columns]
+        print("COLUMNAS DETECTADAS EN EL EXCEL:", list(df.columns))
         
-        # Función auxiliar para buscar columnas con distintos nombres posibles
+        # Función auxiliar segura para extraer valores
         def obtener_valor(row, claves, por_defecto=""):
             for clave in claves:
-                if clave in row and pd.notna(row[clave]):
-                    return str(row[clave]).strip()
+                if clave in row:
+                    val = row[clave]
+                    # Validamos que no sea nulo ni NaN de pandas
+                    if pd.notna(val) and str(val).strip().lower() != 'nan':
+                        return str(val).strip()
             return por_defecto
 
         materiales_creados = 0
 
         for index, row in df.iterrows():
-            # 1. ARTÍCULO
+            # 1. ARTÍCULO (Campo obligatorio)
             articulo = obtener_valor(row, ['ARTÍCULO', 'ARTICULO', 'DESCRIPCIÓN', 'DESCRIPCION', 'MATERIAL'])
-            if not articulo or articulo.lower() == 'nan':
+            if not articulo:
                 continue
                 
             # 2. CANTIDAD Y UNIDAD
-            cant_val = row.get('CANTIDAD', 0)
-            unidad_medida = obtener_valor(row, ['UNIDAD', 'UNIDAD DE MEDIDA', 'UNIDAD_MEDIDA', 'U.M.', 'UM', 'MEDIDA'])
+            cant_val_crudo = obtener_valor(row, ['CANTIDAD', 'CANT', 'CANT.', 'CANTIDAD_PRESUPUESTADA', 'PRESUPUESTO'], por_defecto="0")
+            unidad_medida = obtener_valor(row, ['UNIDAD', 'UNIDAD DE MEDIDA', 'UNIDAD_MEDIDA', 'U.M.', 'UM', 'MEDIDA'], por_defecto="Unidades")
             
             cantidad_num = 0.0
-            if isinstance(cant_val, (int, float)):
-                cantidad_num = float(cant_val) if pd.notna(cant_val) else 0.0
-            else:
-                cant_str = str(cant_val).replace(',', '.').strip()
-                match = re.search(r'[\d\.]+', cant_str)
-                if match:
-                    try:
-                        cantidad_num = float(match.group())
-                    except ValueError:
-                        cantidad_num = 0.0
-                
-                # Si la unidad no venía en columna propia, la buscamos en el texto de la cantidad
-                if not unidad_medida:
-                    unidad_extraida = re.sub(r'[\d\.]+', '', cant_str).strip()
-                    if unidad_extraida:
-                        unidad_medida = unidad_extraida
-
-            if not unidad_medida or unidad_medida.lower() == 'nan':
-                unidad_medida = 'Unidades'
+            cant_str = str(cant_val_crudo).replace(',', '.').strip()
+            
+            match = re.search(r'[\d\.]+', cant_str)
+            if match:
+                try:
+                    cantidad_num = float(match.group())
+                except ValueError:
+                    cantidad_num = 0.0
+            
+            # Extraer unidad del texto de cantidad si no vino separada
+            if unidad_medida == "Unidades" and cant_str:
+                unidad_extraida = re.sub(r'[\d\.]+', '', cant_str).strip()
+                if unidad_extraida:
+                    unidad_medida = unidad_extraida
 
             # 3. OTROS CAMPOS
             codigo = obtener_valor(row, ['CÓDIGO', 'CODIGO', 'COD']).replace('.0', '')
             marca = obtener_valor(row, ['MARCA'])
             etapa = obtener_valor(row, ['ETAPA', 'RUBRO', 'CATEGORIA'])
 
-            # Instanciamos sin 'cantidad_disponible' (que es una @property)
+            # Instanciamos el material
             nuevo_material = ObraMaterial(
                 obra_id=obra.id,
                 codigo=codigo if codigo != 'nan' else '',
@@ -170,10 +237,12 @@ def importar_excel(id):
             materiales_creados += 1
 
         db.session.commit()
+        print(f"¡ÉXITO! Se importaron {materiales_creados} materiales.")
         flash(f'¡Éxito! Se importaron {materiales_creados} materiales correctamente.', 'success')
 
     except Exception as e:
         db.session.rollback()
+        print(f"EXCEPCIÓN EN IMPORTACIÓN: {str(e)}")
         flash(f'Error al procesar el archivo: {str(e)}', 'danger')
         
     return redirect(url_for('obras.detalle', id=obra.id))
