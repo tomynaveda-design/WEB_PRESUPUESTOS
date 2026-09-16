@@ -5,6 +5,7 @@ from app.routes.consumos import consumos_bp
 from app.routes.obras import obras_bp
 from app.routes.materiales import materiales_bp
 from app.routes.inventario import inventario_bp  # <-- 1. Importarlo acá
+from app.models import InventarioGalpon  # <-- Agregá esta línea con tus imports
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
 
