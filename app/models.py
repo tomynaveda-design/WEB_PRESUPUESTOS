@@ -64,8 +64,8 @@ class ObraMaterial(db.Model):
     __tablename__ = 'obra_material'
     id = db.Column(db.Integer, primary_key=True)
     obra_id = db.Column(db.Integer, db.ForeignKey('obras.id'), nullable=False)
-    codigo = db.Column(db.String(50), nullable=True)          
-    articulo = db.Column(db.String(150), nullable=False)       
+    codigo = db.Column(db.String(200), nullable=True)          
+    articulo = db.Column(db.String(200), nullable=False)       
     marca = db.Column(db.String(100), nullable=True)            
     cantidad_presupuestada = db.Column(db.Float, nullable=False, default=0.0) 
     unidad_medida = db.Column(db.String(50), nullable=False, default='Unidades')    
