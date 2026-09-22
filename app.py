@@ -12,9 +12,8 @@ app = Flask(__name__, template_folder='app/templates', static_folder='app/static
 # Configuraciones
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu_clave_secreta_aqui')
 
-# CONFIGURACIÓN DE BASE DE DATOS (Usando _v3 para garantizar un archivo 100% nuevo y limpio)
-# CONFIGURACIÓN DE BASE DE DATOS (Forzamos la base de datos nueva para que cree la columna observaciones)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestion_obras_v3.db'
+# CONFIGURACIÓN DE BASE DE DATOS (Conectado a MySQL)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'mysql+pymysql://root:@localhost/gestion_obras')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializar Base de Datos

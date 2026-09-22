@@ -2,11 +2,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
 from app.models import InventarioGalpon
 
-inventario_bp = Blueprint('inventario', __name__)
+inventario_bp = Blueprint('inventario', __name__, url_prefix='/inventario')
 
-@inventario_bp.route('/inventario')
+@inventario_bp.route('/')
 def index():
-    # Traemos los materiales ordenados por ID de forma ascendente (1, 2, 3...)
+    # Traemos los materiales ordenados por ID
     materiales = InventarioGalpon.query.order_by(InventarioGalpon.id.asc()).all()
     return render_template('inventario/index.html', materiales=materiales)
 
@@ -40,5 +40,5 @@ def eliminar(id):
     material = InventarioGalpon.query.get_or_404(id)
     db.session.delete(material)
     db.session.commit()
-    flash('Material eliminado.', 'danger')
+    flash('Material eliminado del inventario.', 'danger')
     return redirect(url_for('inventario.index'))
