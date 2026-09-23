@@ -1,272 +1,439 @@
 {% extends "base.html" %}
+
 {% block content %}
-<!-- ENCABEZADO RESPONSIVO -->
-<div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-    <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ obra.nombre }}</h1>
-        <p class="text-gray-600 text-sm mt-1">{{ obra.descripcion }}</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
-        <a href="{{ url_for('obras.index') }}" class="bg-gray-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-gray-600 transition">Volver</a>
-        
-        <form action="{{ url_for('obras.importar_excel', id=obra.id) }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2">
-            <input type="file" name="documento_excel" accept=".xlsx, .xls" required 
-                   class="text-xs sm:text-sm text-gray-600 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-semibold file:bg-white file:text-gray-700 hover:file:bg-gray-100 cursor-pointer">
-            
-            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm px-3 py-2 rounded-lg shadow-sm transition flex items-center space-x-1">
-                <span>📊 Excel</span>
-            </button>
-        </form>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        <a href="{{ url_for('obras.agregar_material', id=obra.id) }}" class="bg-green-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm hover:bg-green-700 transition">+ Manual</a>
-    </div>
-</div>
+    <!-- BOTÓN VOLVER Y ENCABEZADO DE LA OBRA -->
+    <div class="space-y-3">
+        <a href="{{ url_for('obras.index') }}" 
+           class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-orange-600 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Volver a Obras
+        </a>
 
-<!-- TARJETAS DE RESUMEN FINANCIERO -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 flex flex-col justify-between">
-        <div>
-            <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Presupuesto Inicial</p>
-            <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.presupuesto_inicial).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
-        </div>
-    </div>
-    
-    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500 flex flex-col justify-between">
-        <div>
-            <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Total Gastado (Comprado)</p>
-            <p class="text-xl sm:text-2xl font-bold text-gray-800">$ {{ "{:,.2f}".format(obra.total_gastado).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
-        </div>
-        
-        <div class="mt-3 pt-3 border-t border-gray-100">
-            <div class="flex justify-between items-center mb-1">
-                <p class="text-xs text-gray-500" title="Total gastado + (Material faltante * Mejor cotización)">Est. total proyectado:</p>
-                <p class="text-sm font-bold {% if obra.total_estimado > obra.presupuesto_inicial %}text-red-600{% else %}text-gray-700{% endif %}">
-                    $ {{ "{:,.2f}".format(obra.total_estimado).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-                </p>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight uppercase">
+                    {{ obra.nombre }}
+                </h1>
+                {% if obra.descripcion %}
+                    <p class="text-sm text-slate-500 mt-0.5">{{ obra.descripcion }}</p>
+                {% endif %}
             </div>
-            {% set porcentaje = (obra.total_gastado / obra.total_estimado * 100) if obra.total_estimado > 0 else 0 %}
-            <div class="w-full bg-gray-200 rounded-full h-1.5" title="Gastado: {{ '{:.0f}'.format(porcentaje) }}%">
-                <div class="bg-red-500 h-1.5 rounded-full" style="width: {{ porcentaje }}%"></div>
+
+            <!-- ACCIONES PRINCIPALES (IMPORTAR EXCEL Y MANUAL) -->
+            <div class="flex items-center gap-3">
+                <form action="{{ url_for('obras.importar_excel', id=obra.id) }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                    <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all duration-200 text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Importar Excel</span>
+                        <input type="file" name="documento_excel" accept=".xlsx, .xls" class="hidden" onchange="this.form.submit()">
+                    </label>
+                </form>
+
+                <a href="{{ url_for('obras.agregar_material', id=obra.id) }}" 
+                   class="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span>+ Manual</span>
+                </a>
             </div>
         </div>
     </div>
-    
-    <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500 flex flex-col justify-between">
-        <div>
-            <p class="text-xs sm:text-sm text-gray-500 font-semibold uppercase">Saldo Disponible</p>
-            <p class="text-xl sm:text-2xl font-bold {% if obra.saldo_disponible < 0 %}text-red-600{% else %}text-gray-800{% endif %}">
-                $ {{ "{:,.2f}".format(obra.saldo_disponible).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-            </p>
+
+    <!-- TARJETAS RESUMEN DE PRESUPUESTO (KPIs) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Presupuesto Inicial -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 border-l-4 border-l-blue-500 shadow-sm space-y-2">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Presupuesto Inicial</span>
+            <div class="text-2xl font-black text-slate-900">
+                ${{ "{:,.2f}".format(obra.presupuesto_inicial or 0) }}
+            </div>
+        </div>
+
+        <!-- Total Gastado -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 border-l-4 border-l-amber-500 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Gastado</span>
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full {% if obra.estado_alerta_presupuesto == 'danger' %}bg-red-100 text-red-700{% elif obra.estado_alerta_presupuesto == 'warning' %}bg-amber-100 text-amber-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                    {{ obra.porcentaje_ejecutado }}%
+                </span>
+            </div>
+            <div class="text-2xl font-black text-slate-900">
+                ${{ "{:,.2f}".format(obra.total_gastado) }}
+            </div>
+            <!-- Barra de ejecución -->
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div class="h-full rounded-full {% if obra.estado_alerta_presupuesto == 'danger' %}bg-red-500{% elif obra.estado_alerta_presupuesto == 'warning' %}bg-amber-500{% else %}bg-emerald-500{% endif %}" 
+                     style="width: {{ [obra.porcentaje_ejecutado, 100]|min }}%"></div>
+            </div>
+        </div>
+
+        <!-- Saldo Disponible -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 border-l-4 border-l-emerald-500 shadow-sm space-y-2">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Disponible</span>
+            <div class="text-2xl font-black {% if obra.saldo_disponible < 0 %}text-red-600{% else %}text-emerald-600{% endif %}">
+                ${{ "{:,.2f}".format(obra.saldo_disponible) }}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BARRA DE BÚSQUEDA AVANZADA Y FILTROS -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <!-- Selector de Filtro -->
+            <select id="filtroCategoria" onchange="filtrarTabla()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all cursor-pointer">
+                <option value="todos">Buscar en todo</option>
+                <option value="codigo">Sólo por Código</option>
+                <option value="nombre">Sólo por Nombre</option>
+                <option value="etapa">Sólo por Etapa</option>
+            </select>
+
+            <!-- Input de Búsqueda -->
+            <div class="relative w-full sm:w-80">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <input type="text" 
+                       id="busquedaMaterial"
+                       onkeyup="filtrarTabla()"
+                       placeholder="Escribí para filtrar..." 
+                       class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+            </div>
+        </div>
+
+        <div class="text-sm text-slate-500 font-medium self-end md:self-center">
+            Total Materiales: <span class="font-bold text-slate-800">{{ obra.materiales|length }}</span>
         </div>
     </div>
-</div>
 
-<!-- TABLA PRINCIPAL CON DESLIZAMIENTO HORIZONTAL EN CELULAR -->
-<div class="bg-white shadow-md rounded-lg overflow-x-auto mb-8">
-    <table class="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-        <thead class="bg-gray-800 text-white">
-            <tr>
-                <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Cód</th>
-                <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Artículo</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Cantidad</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Comprado</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Falta</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Stock Obra</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Usado</th>
-                <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Mejor Opción</th>
-                <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Precio Unit.</th>
-                <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Total Est.</th>
-                <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Acciones</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            {% for material in obra.materiales %}
-            <tr>
-                <td class="px-3 py-3 text-gray-500 whitespace-nowrap">{{ material.codigo or '-' }}</td>
-                <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">
-                    {{ material.articulo }}
-                    {% if material.marca %}
-                        <span class="text-xs text-gray-400 block">({{ material.marca }})</span>
-                    {% endif %}
-                </td>
-                <td class="px-3 py-3 text-center whitespace-nowrap">{{ material.cantidad_presupuestada }} {{ material.unidad_medida }}</td>
-                
-                <td class="px-3 py-3 text-center whitespace-nowrap">
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold 
-                        {% if material.estado_compra == 'Completado' %}bg-green-100 text-green-800
-                        {% elif material.estado_compra == 'Parcial' %}bg-yellow-100 text-yellow-800
-                        {% else %}bg-gray-100 text-gray-600{% endif %}">
-                        {{ material.cantidad_comprada }} {{ material.unidad_medida }}
-                    </span>
-                </td>
-                
-                <td class="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
-                    {{ material.falta_comprar }} {{ material.unidad_medida }}
-                </td>
-
-                <td class="px-3 py-3 text-center font-bold whitespace-nowrap {% if material.cantidad_disponible == 0 %}text-red-500{% else %}text-green-600{% endif %}">
-                    {{ material.cantidad_disponible }} {{ material.unidad_medida }}
-                </td>
-
-                <td class="px-3 py-3 text-center text-gray-600 whitespace-nowrap">
-                    {{ material.total_usado }} {{ material.unidad_medida }}
-                </td>
-                
-                <td class="px-3 py-3 text-left whitespace-nowrap">
+    <!-- TABLA DE MATERIALES -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse" id="tablaMateriales">
+                <!-- Cabecera de la tabla -->
+                <thead class="bg-slate-800 text-slate-200 uppercase text-[11px] font-extrabold tracking-wider">
+                    <tr>
+                        <th class="py-4 px-6">Cód / Artículo</th>
+                        <th class="py-4 px-4 text-center">Avance Compras</th>
+                        <th class="py-4 px-4 text-center">Stock en Obra</th>
+                        <th class="py-4 px-4">Cotización / Precio</th>
+                        <th class="py-4 px-6 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    {% for material in obra.materiales %}
                     {% set mejor_cot = material.cotizacion_mas_barata() %}
-                    {% if mejor_cot %}
-                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-semibold">{{ mejor_cot.proveedor.nombre }}</span>
-                    {% else %}
-                        <span class="text-gray-400 italic text-xs">Sin cotizar</span>
-                    {% endif %}
-                </td>
-
-                <td class="px-3 py-3 text-right text-gray-700 whitespace-nowrap">
-                    {% if mejor_cot %}
-                        $ {{ "{:,.2f}".format(mejor_cot.precio_unitario).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                
-                <td class="px-3 py-3 text-right font-bold text-gray-800 whitespace-nowrap">
-                    {% if mejor_cot %} $ {{ "{:,.2f}".format(mejor_cot.precio_total).replace(',', 'X').replace('.', ',').replace('X', '.') }} {% else %} - {% endif %}
-                </td>
-
-                <td class="px-3 py-3 text-center whitespace-nowrap">
-                    <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="document.getElementById('modalCompra{{ material.id }}').showModal()" class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 text-xs font-semibold transition" title="Registrar Compra">+ Compra</button>
-                        <button type="button" onclick="document.getElementById('modalUso{{ material.id }}').showModal()" class="bg-sky-100 text-sky-700 px-2 py-1 rounded hover:bg-sky-200 text-xs font-semibold transition" title="Asentar Uso">- Uso</button>
-                        <button type="button" onclick="document.getElementById('modalEditarCompra{{ material.id }}').showModal()" class="bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 text-xs font-semibold transition" title="Corregir compra">✏️</button>
-                        <a href="{{ url_for('obras.cotizar_material', material_id=material.id) }}" class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 text-xs font-semibold transition" title="Cotizar">Cotizar</a>
-                        <a href="{{ url_for('obras.editar_material', material_id=material.id) }}" class="bg-amber-100 text-amber-700 px-2 py-1 rounded hover:bg-amber-200 text-xs font-semibold transition" title="Editar">Editar</a>
-                        <form action="{{ url_for('obras.eliminar_material', material_id=material.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este material?');">
-                            <button type="submit" class="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 text-xs font-semibold transition" title="Eliminar Material">🗑️</button>
-                        </form>
-                    </div>
-
-                    <!-- MODALES -->
-                    <dialog id="modalCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
-                        <h3 class="text-lg font-bold text-gray-800 mb-2">Registrar Compra</h3>
-                        <p class="text-sm text-gray-600 mb-4">{{ material.articulo }} (Falta: {{ material.falta_comprar }} {{ material.unidad_medida }})</p>
-                        <form action="{{ url_for('materiales.registrar_compra', material_id=material.id) }}" method="POST">
-                            <div class="mb-4 text-left">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad a sumar ({{ material.unidad_medida }}):</label>
-                                <input type="number" step="0.01" name="cantidad_comprada" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    <tr class="hover:bg-slate-50/80 transition-colors fila-material">
+                        
+                        <!-- Columna Cód / Artículo -->
+                        <td class="py-4 px-6">
+                            <div class="font-bold text-slate-900 text-base leading-snug nombre-mat">
+                                {{ material.articulo }}
                             </div>
-                            <div class="flex justify-end space-x-2">
-                                <button type="button" onclick="document.getElementById('modalCompra{{ material.id }}').close()" class="bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-400">Cancelar</button>
-                                <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm hover:bg-emerald-700">Guardar Compra</button>
+                            <div class="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                {% if material.codigo %}
+                                    <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold codigo-mat">#{{ material.codigo }}</span>
+                                {% endif %}
+                                {% if material.marca %}
+                                    <span class="font-semibold text-slate-600">{{ material.marca }}</span>
+                                {% endif %}
+                                {% if material.etapa %}
+                                    <span class="text-orange-600 font-medium etapa-mat">• {{ material.etapa }}</span>
+                                {% endif %}
                             </div>
-                        </form>
-                    </dialog>
+                        </td>
 
-                    <dialog id="modalEditarCompra{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
-                        <h3 class="text-lg font-bold text-gray-800 mb-2">Corregir Compra Total</h3>
-                        <p class="text-sm text-gray-600 mb-4">{{ material.articulo }}</p>
-                        <form action="{{ url_for('materiales.editar_compra', material_id=material.id) }}" method="POST">
-                            <div class="mb-4 text-left">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad Comprada Total Real ({{ material.unidad_medida }}):</label>
-                                <input type="number" step="0.01" name="cantidad_comprada" value="{{ material.cantidad_comprada }}" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                                <p class="text-xs text-gray-500 mt-1">Usa esta opción si te equivocaste ingresando compras previas.</p>
+                        <!-- Columna Avance Compras -->
+                        <td class="py-4 px-4 text-center">
+                            <div class="text-xs font-bold text-slate-800 mb-0.5">
+                                {{ material.cantidad_comprada }} / {{ material.cantidad_presupuestada }} <span class="text-slate-400 font-normal">{{ material.unidad_medida }}</span>
                             </div>
-                            <div class="flex justify-end space-x-2">
-                                <button type="button" onclick="document.getElementById('modalEditarCompra{{ material.id }}').close()" class="bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-400">Cancelar</button>
-                                <button type="submit" class="bg-amber-600 text-white px-3 py-1.5 rounded text-sm hover:bg-amber-700">Guardar Corrección</button>
+                            <div class="text-[11px] text-slate-400">
+                                Falta: <span class="font-bold text-amber-600">{{ material.falta_comprar }}</span>
                             </div>
-                        </form>
-                    </dialog>
+                            {% set pct_compra = (material.cantidad_comprada / material.cantidad_presupuestada * 100) if material.cantidad_presupuestada > 0 else 0 %}
+                            <div class="w-24 bg-slate-100 h-1.5 rounded-full mx-auto mt-1.5 overflow-hidden">
+                                <div class="h-full rounded-full {% if pct_compra >= 100 %}bg-emerald-500{% elif pct_compra > 0 %}bg-amber-500{% else %}bg-slate-300{% endif %}" 
+                                     style="width: {{ [pct_compra, 100]|min }}%"></div>
+                            </div>
+                        </td>
 
-                    <dialog id="modalUso{{ material.id }}" class="p-6 rounded-lg shadow-xl border border-gray-200 backdrop:bg-gray-800/50 w-11/12 max-w-md">
-                        <h3 class="text-lg font-bold text-gray-800 mb-2">Asentar / Corregir Uso</h3>
-                        <p class="text-sm text-gray-600 mb-2">{{ material.articulo }}</p>
-                        <p class="text-xs text-gray-500 mb-4">Stock actual: {{ material.cantidad_disponible }} {{ material.unidad_medida }} | Usado acumulado: {{ material.total_usado }} {{ material.unidad_medida }}</p>
+                        <!-- Columna Stock en Obra -->
+                        <td class="py-4 px-4 text-center">
+                            <span class="inline-block {% if material.cantidad_disponible > 0 %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-slate-100 text-slate-600 border-slate-200{% endif %} font-bold px-3 py-1 rounded-lg text-sm border">
+                                {{ material.cantidad_disponible }} {{ material.unidad_medida }}
+                            </span>
+                            <div class="text-[11px] text-slate-400 mt-1">
+                                Usado en obra: {{ material.total_usado }} {{ material.unidad_medida }}
+                            </div>
+                        </td>
 
-                        <form action="{{ url_for('consumos.registrar_uso', material_id=material.id) }}" method="POST" class="mb-4">
-                            <div class="mb-3 text-left">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad a usar ahora ({{ material.unidad_medida }}):</label>
-                                <input type="number" step="0.01" name="cantidad_usada" max="{{ material.cantidad_disponible }}" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div class="mb-4 text-left">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Notas / Observaciones:</label>
-                                <input type="text" name="notas" placeholder="Ej: Vaciado de contrapiso" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div class="flex justify-end space-x-2">
-                                <button type="button" onclick="document.getElementById('modalUso{{ material.id }}').close()" class="bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-400">Cancelar</button>
-                                <button type="submit" class="bg-sky-600 text-white px-3 py-1.5 rounded text-sm hover:bg-sky-700">Registrar Uso</button>
-                            </div>
-                        </form>
+                        <!-- Columna Cotización / Precio -->
+                        <td class="py-4 px-4">
+                            {% if material.precio_compra_unitario %}
+                                <div class="text-xs font-semibold text-emerald-600">Precio Pagado Real</div>
+                                <div class="font-bold text-slate-900">${{ "{:,.2f}".format(material.precio_compra_unitario) }}</div>
+                            {% elif mejor_cot %}
+                                <div class="text-xs text-slate-500 truncate" title="{{ mejor_cot.proveedor.nombre }}">{{ mejor_cot.proveedor.nombre }}</div>
+                                <div class="font-bold text-slate-900">${{ "{:,.2f}".format(mejor_cot.precio_unitario) }} <span class="text-xs font-normal text-slate-400">/ {{ material.unidad_medida }}</span></div>
+                            {% else %}
+                                <span class="text-xs text-slate-400 italic">Sin cotizar</span>
+                            {% endif %}
+                        </td>
 
-                        {% if material.total_usado > 0 %}
-                        <div class="border-t border-gray-200 pt-3 flex justify-between items-center">
-                            <span class="text-xs text-red-600 font-semibold">¿Borrar historial de uso?</span>
-                            <form action="{{ url_for('consumos.resetear_uso_material', material_id=material.id) }}" method="POST" onsubmit="return confirm('¿Confirmás eliminar todo el historial de uso para {{ material.articulo }}?');">
-                                <button type="submit" class="bg-red-100 text-red-700 border border-red-300 px-2 py-1 rounded text-xs font-bold hover:bg-red-200 transition">
-                                    🗑️ Resetear Uso
+                        <!-- Columna Acciones -->
+                        <td class="py-4 px-6 text-right">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button onclick="abrirModalCompra('{{ material.id }}', '{{ material.articulo|escape }}')" 
+                                        class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold px-3 py-1.5 rounded-xl text-xs transition-all shadow-sm">
+                                    + Compra
                                 </button>
-                            </form>
-                        </div>
-                        {% endif %}
-                    </dialog>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="11" class="px-6 py-8 text-center text-gray-500">
-                    <p class="text-base sm:text-lg mb-2">No hay materiales cargados en esta obra.</p>
-                    <p class="text-xs sm:text-sm">Subí tu archivo Excel arriba o hacé clic en "+ Manual" para empezar.</p>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+                                <button onclick="abrirModalUso('{{ material.id }}', '{{ material.articulo|escape }}', '{{ material.cantidad_disponible }}')" 
+                                        class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-xl text-xs transition-all shadow-sm">
+                                    - Uso
+                                </button>
+
+                                <details class="relative inline-block text-left group">
+                                    <summary class="list-none cursor-pointer p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/></summary>
+                                    </summary>
+                                    <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-20 text-left">
+                                        <button type="button" onclick="abrirModalEditarCompra('{{ material.id }}', '{{ material.articulo|escape }}', '{{ material.cantidad_comprada }}', '{{ material.precio_compra_unitario or '' }}')" 
+                                                class="w-full text-left px-3 py-1.5 text-xs text-amber-700 hover:bg-amber-50 font-medium">
+                                            ✏️ Ajustar Compra
+                                        </button>
+                                        <a href="{{ url_for('obras.cotizar_material', material_id=material.id) }}" class="block px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Cotizar</a>
+                                        <a href="{{ url_for('obras.editar_material', material_id=material.id) }}" class="block px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Editar Material</a>
+                                        <form action="{{ url_for('obras.eliminar_material', material_id=material.id) }}" method="POST" onsubmit="return confirm('¿Eliminar material?');">
+                                            <button type="submit" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-slate-400">
+                            No hay materiales registrados en esta obra aún.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
-<!-- HISTORIAL DE CONSUMOS -->
-<div class="bg-white shadow-md rounded-lg p-4 sm:p-6">
-    <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Historial de Consumos en Obra</h2>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-            <thead class="bg-gray-100 text-gray-700">
-                <tr>
-                    <th class="px-3 py-2 text-left font-semibold">Fecha</th>
-                    <th class="px-3 py-2 text-left font-semibold">Material</th>
-                    <th class="px-3 py-2 text-center font-semibold">Cantidad Usada</th>
-                    <th class="px-3 py-2 text-left font-semibold">Notas</th>
-                    <th class="px-3 py-2 text-center font-semibold">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% set todos_los_usos = [] %}
-                {% for mat in obra.materiales %}
-                    {% for reg in mat.registros_uso %}
-                        {% set _ = todos_los_usos.append(reg) %}
-                    {% endfor %}
-                {% endfor %}
+<!-- SCRIPT DE ORDENAMIENTO AUTOMÁTICO Y BÚSQUEDA AVANZADA -->
+<script>
+// Ordenar por Código apenas carga la página
+document.addEventListener("DOMContentLoaded", function() {
+    ordenarPorCodigo();
+});
 
-                {% for reg in todos_los_usos | sort(attribute='fecha_uso', reverse=True) %}
-                <tr>
-                    <td class="px-3 py-2 text-gray-500 whitespace-nowrap">{{ reg.fecha_uso.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td class="px-3 py-2 font-semibold text-gray-800 whitespace-nowrap">{{ reg.obra_material.articulo }}</td>
-                    <td class="px-3 py-2 text-center text-blue-600 font-bold whitespace-nowrap">- {{ reg.cantidad_usada }} {{ reg.obra_material.unidad_medida }}</td>
-                    <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ reg.notas or 'Sin observaciones' }}</td>
-                    <td class="px-3 py-2 text-center whitespace-nowrap">
-                        <form action="{{ url_for('consumos.eliminar_uso', uso_id=reg.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que querés eliminar este registro?');">
-                            <button type="submit" class="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 text-xs font-semibold transition">
-                                🗑️ Eliminar
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="px-4 py-6 text-center text-gray-400 italic">
-                        No hay registros de consumos hasta el momento.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+function ordenarPorCodigo() {
+    let tbody = document.querySelector("#tablaMateriales tbody");
+    // Seleccionar solo las filas reales de materiales
+    let filas = Array.from(tbody.getElementsByClassName("fila-material"));
+    
+    if(filas.length === 0) return;
+
+    filas.sort(function(a, b) {
+        let spanA = a.querySelector('.codigo-mat');
+        let spanB = b.querySelector('.codigo-mat');
+        
+        // Extraer solo los números del código (Ej: "#160" -> 160). Si no tiene, se va al fondo (999999).
+        let valA = spanA ? parseInt(spanA.innerText.replace(/\D/g, '')) || 999999 : 999999;
+        let valB = spanB ? parseInt(spanB.innerText.replace(/\D/g, '')) || 999999 : 999999;
+        
+        return valA - valB;
+    });
+
+    // Reinsertar las filas ya ordenadas numéricamente
+    filas.forEach(fila => tbody.appendChild(fila));
+}
+
+function filtrarTabla() {
+    let inputRaw = document.getElementById("busquedaMaterial").value.toLowerCase().trim();
+    let categoria = document.getElementById("filtroCategoria").value;
+    let filas = document.getElementsByClassName("fila-material");
+
+    // Si el buscador está vacío, muestra todas las filas
+    if (!inputRaw) {
+        for (let fila of filas) fila.style.display = "";
+        return;
+    }
+
+    // Limpia el texto ingresado por si el usuario escribe '#1' en lugar de '1'
+    let inputLimpio = inputRaw.replace(/^#/, '').trim();
+
+    for (let fila of filas) {
+        let visible = false;
+
+        if (categoria === "todos") {
+            // En búsqueda general busca coincidencias en toda la fila
+            visible = fila.innerText.toLowerCase().includes(inputRaw);
+        } else if (categoria === "codigo") {
+            let elem = fila.querySelector('.codigo-mat');
+            if (elem) {
+                // Obtiene el código quitando el numeral '#'
+                let codigoTexto = elem.innerText.toLowerCase().replace(/^#/, '').trim();
+                // COINCIDENCIA EXACTA: Si busca '1', solo coincide con '1' (no con '11' ni '21')
+                visible = (codigoTexto === inputLimpio);
+            }
+        } else if (categoria === "nombre") {
+            let elem = fila.querySelector('.nombre-mat');
+            let nombreTexto = elem ? elem.innerText.toLowerCase() : "";
+            visible = nombreTexto.includes(inputRaw);
+        } else if (categoria === "etapa") {
+            let elem = fila.querySelector('.etapa-mat');
+            let etapaTexto = elem ? elem.innerText.toLowerCase() : "";
+            visible = etapaTexto.includes(inputRaw);
+        }
+
+        // Muestra u oculta la fila según la coincidencia
+        fila.style.display = visible ? "" : "none";
+    }
+}
+</script>
+
+<!-- MODAL REGISTRAR COMPRA -->
+<div id="modalCompra" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-lg font-bold text-slate-800">Registrar Compra</h3>
+            <button onclick="cerrarModal('modalCompra')" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+        </div>
+        <p id="nombreMaterialCompra" class="text-sm font-semibold text-emerald-600"></p>
+        
+        <form id="formCompra" method="POST" action="" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Cantidad Comprada a Sumar</label>
+                <input type="number" step="0.01" min="0.01" name="cantidad_comprada" required 
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Precio Unitario Pagado ($) <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                <input type="number" step="0.01" min="0" name="precio_unitario" placeholder="Ej: 2500.00" 
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="cerrarModal('modalCompra')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancelar</button>
+                <button type="submit" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow">Guardar Compra</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<!-- MODAL AJUSTAR / EDITAR COMPRA -->
+<div id="modalEditarCompra" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-lg font-bold text-slate-800">Ajustar Total Comprado</h3>
+            <button onclick="cerrarModal('modalEditarCompra')" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+        </div>
+        <p id="nombreMaterialEditarCompra" class="text-sm font-semibold text-amber-600"></p>
+        
+        <form id="formEditarCompra" method="POST" action="" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Cantidad Comprada Total Corregida</label>
+                <input type="number" step="0.01" min="0" id="inputCantidadComprada" name="cantidad_comprada" required 
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                <p class="text-xs text-slate-400 mt-1">Sustituye la cantidad comprada acumulada.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Precio Unitario Pagado ($) <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                <input type="number" step="0.01" min="0" id="inputPrecioUnitario" name="precio_unitario" placeholder="Ej: 2500.00" 
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="cerrarModal('modalEditarCompra')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancelar</button>
+                <button type="submit" class="px-4 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow">Guardar Ajuste</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL REGISTRAR USO / CONSUMO -->
+<div id="modalUso" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-lg font-bold text-slate-800">Registrar Consumo en Obra</h3>
+            <button onclick="cerrarModal('modalUso')" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+        </div>
+        <div>
+            <p id="nombreMaterialUso" class="text-sm font-semibold text-blue-600"></p>
+            <p id="disponibleMaterialUso" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        
+        <form id="formUso" method="POST" action="" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Cantidad a Retirar / Usar</label>
+                <input type="number" step="0.01" min="0.01" name="cantidad_usada" required 
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Notas / Destino (Opcional)</label>
+                <input type="text" name="notas" placeholder="Ej: Losa de primer piso" 
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="cerrarModal('modalUso')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancelar</button>
+                <button type="submit" class="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow">Registrar Uso</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- FUNCIONES AUXILIARES PARA LOS MODALES -->
+<script>
+function abrirModalCompra(materialId, nombre) {
+    document.getElementById('nombreMaterialCompra').innerText = nombre;
+    let urlBase = "{{ url_for('materiales.registrar_compra', material_id=0) }}";
+    document.getElementById('formCompra').action = urlBase.replace('0', materialId);
+    let modal = document.getElementById('modalCompra');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function abrirModalEditarCompra(materialId, nombre, cantidadActual, precioActual) {
+    document.getElementById('nombreMaterialEditarCompra').innerText = nombre;
+    document.getElementById('inputCantidadComprada').value = cantidadActual;
+    document.getElementById('inputPrecioUnitario').value = precioActual || '';
+    let urlBase = "{{ url_for('materiales.editar_compra', material_id=0) }}";
+    document.getElementById('formEditarCompra').action = urlBase.replace('0', materialId);
+    let modal = document.getElementById('modalEditarCompra');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function abrirModalUso(materialId, nombre, disponible) {
+    document.getElementById('nombreMaterialUso').innerText = nombre;
+    document.getElementById('disponibleMaterialUso').innerText = `Disponible en obra: ${disponible}`;
+    let urlBase = "{{ url_for('consumos.registrar_uso', material_id=0) }}";
+    document.getElementById('formUso').action = urlBase.replace('0', materialId);
+    let modal = document.getElementById('modalUso');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModal(modalId) {
+    let modal = document.getElementById(modalId);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
 {% endblock %}

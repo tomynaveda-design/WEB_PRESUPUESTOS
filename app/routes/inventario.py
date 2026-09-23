@@ -6,9 +6,20 @@ inventario_bp = Blueprint('inventario', __name__, url_prefix='/inventario')
 
 @inventario_bp.route('/')
 def index():
-    # Traemos los materiales ordenados por ID
     materiales = InventarioGalpon.query.order_by(InventarioGalpon.id.asc()).all()
-    return render_template('inventario/index.html', materiales=materiales)
+    
+    # Métricas para tarjetas superiores
+    total_items = len(materiales)
+    total_stock = sum(m.cantidad for m in materiales if m.cantidad > 0)
+    items_sin_stock = sum(1 for m in materiales if m.cantidad <= 0)
+
+    return render_template(
+        'inventario/index.html', 
+        materiales=materiales,
+        total_items=total_items,
+        total_stock=total_stock,
+        items_sin_stock=items_sin_stock
+    )
 
 @inventario_bp.route('/agregar', methods=['POST'])
 def agregar():
@@ -29,10 +40,17 @@ def agregar():
 @inventario_bp.route('/actualizar/<int:id>', methods=['POST'])
 def actualizar(id):
     material = InventarioGalpon.query.get_or_404(id)
-    material.cantidad = request.form.get('cantidad', material.cantidad)
+    
+    # Se actualizan todos los campos editables
+    material.articulo = request.form.get('articulo', material.articulo)
+    try:
+        material.cantidad = float(request.form.get('cantidad', material.cantidad))
+    except (ValueError, TypeError):
+        pass
     material.observaciones = request.form.get('observaciones', material.observaciones)
+    
     db.session.commit()
-    flash('Inventario actualizado.', 'success')
+    flash('Inventario actualizado correctamente.', 'success')
     return redirect(url_for('inventario.index'))
 
 @inventario_bp.route('/eliminar/<int:id>', methods=['POST'])

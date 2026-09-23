@@ -10,16 +10,30 @@
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
 
     <!-- Barra de Navegación -->
-    <nav class="bg-blue-600 text-white shadow-md">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="/" class="text-xl font-bold tracking-wide">🏗️ Control de Obras</a>
-            <div class="space-x-4">
-                <a href="/" class="hover:underline">Obras</a>
-                <a href="#" class="hover:underline">Materiales</a>
-                <a href="{{ url_for('inventario.index') }}">Inventario</a>
+    <nav class="bg-slate-900 border-b border-slate-800 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            
+            <!-- LOGO CIESER -->
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('obras.index') }}" class="flex items-center gap-2">
+                    <!-- Asegúrate de guardar la imagen del logo en static/img/logo.png -->
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="CIESER Logo" class="h-9 w-auto bg-white p-1 rounded-lg">
+                    <span class="font-black text-lg tracking-wider text-white">CONTROL <span class="text-orange-500">OBRAS</span></span>
+                </a>
             </div>
+
+            <!-- NAVEGACIÓN -->
+            <div class="flex items-center gap-6 text-sm font-medium">
+                <a href="{{ url_for('obras.index') }}" class="text-orange-400 hover:text-orange-300 font-bold transition">Obras</a>
+                <a href="{{ url_for('inventario.index') }}" class="text-slate-300 hover:text-white transition font-medium">
+    Inventario
+</a>
+            </div>
+
         </div>
-    </nav>
+    </div>
+</nav>
 
     <!-- Contenido Principal -->
     <main class="container mx-auto px-6 py-8 flex-grow">

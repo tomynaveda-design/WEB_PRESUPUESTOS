@@ -1,112 +1,210 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
-    <!-- Encabezado y Botón -->
-    <div class="flex justify-between items-center mb-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- ENCABEZADO Y BOTÓN PRINCIPAL -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">📦 Inventario de Galpón</h1>
-            <p class="text-sm text-gray-500">Control y gestión general de materiales y herramientas.</p>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                Inventario de Galpón
+                <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full border border-orange-200">
+                    CIESER
+                </span>
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">Control general de stock de materiales y herramientas en depósito.</p>
         </div>
-        <button onclick="document.getElementById('modalNuevo').showModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow transition">
-            + Cargar Material
+
+        <button onclick="abrirModalNuevo()" 
+                class="inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>+ Cargar Material</span>
         </button>
     </div>
 
-    <!-- Mensajes Flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="mb-4 p-4 rounded-lg text-sm {% if category == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
-              {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    <!-- TARJETAS DE INDICADORES (KPIs) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 border-l-4 border-l-blue-500 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Registros</span>
+            <div class="text-2xl font-black text-slate-800">{{ total_items }}</div>
+            <p class="text-xs text-slate-400">Materiales cargados</p>
+        </div>
 
-    <!-- Tabla tipo Planilla -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider border-b border-gray-200">
-                <tr>
-                    <th class="py-3 px-4 w-16 text-center">N°</th>
-                    <th class="py-3 px-4">Material / Descripción</th>
-                    <th class="py-3 px-4 w-32 text-center">Cantidad</th>
-                    <th class="py-3 px-4">Observaciones</th>
-                    <th class="py-3 px-4 w-28 text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 text-sm">
-                {% for m in materiales %}
-                <tr class="hover:bg-gray-50">
-                    <!-- N° secuencial automático -->
-                    <td class="py-3 px-4 text-center font-semibold text-gray-600">{{ loop.index }}</td>
-                    
-                    <!-- Material / Descripción editable -->
-                    <td class="py-3 px-4">
-                        <input form="form-actualizar-{{ m.id }}" type="text" name="articulo" value="{{ m.articulo }}" required class="w-full border border-gray-300 rounded px-2 py-1 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </td>
-                    
-                    <!-- Cantidad editable -->
-                    <td class="py-3 px-4 text-center">
-                        <input form="form-actualizar-{{ m.id }}" type="number" step="0.01" name="cantidad" value="{{ m.cantidad }}" class="w-24 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </td>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 border-l-4 border-l-emerald-500 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Total Acumulado</span>
+            <div class="text-2xl font-black text-emerald-600">{{ "{:,.2f}".format(total_stock) }}</div>
+            <p class="text-xs text-slate-400">Unidades en galpón</p>
+        </div>
 
-                    <!-- Observaciones editables -->
-                    <td class="py-3 px-4">
-                        <input form="form-actualizar-{{ m.id }}" type="text" name="observaciones" value="{{ m.observaciones or '' }}" placeholder="Sin observaciones" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </td>
-                    
-                    <!-- Acciones (Guardar cambios y Eliminar) -->
-                    <td class="py-3 px-4 text-center flex items-center justify-center gap-3">
-                        <!-- Formulario de Actualizar -->
-                        <form id="form-actualizar-{{ m.id }}" action="{{ url_for('inventario.actualizar', id=m.id) }}" method="POST">
-                            <button type="submit" class="text-green-600 hover:text-green-800 font-bold text-lg" title="Guardar cambios">💾</button>
-                        </form>
-
-                        <!-- Formulario de Eliminar -->
-                        <form action="{{ url_for('inventario.eliminar', id=m.id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este ítem?');">
-                            <button type="submit" class="text-red-500 hover:text-red-700 font-medium" title="Eliminar">🗑️</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="text-center py-8 text-gray-400">No hay materiales cargados en el galpón todavía.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 border-l-4 border-l-amber-500 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Sin Stock</span>
+            <div class="text-2xl font-black text-amber-600">{{ items_sin_stock }}</div>
+            <p class="text-xs text-slate-400">Ítems con saldo 0</p>
+        </div>
     </div>
+
+    <!-- BUSCADOR EN VIVO -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="relative w-full md:w-96">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <input type="text" 
+                   id="busquedaInventario"
+                   onkeyup="filtrarInventario()"
+                   placeholder="Buscar en el inventario..." 
+                   class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+        </div>
+        <div class="text-sm text-slate-500 font-medium">
+            Mostrando <span id="cantVisibles" class="font-bold text-slate-800">{{ materiales|length }}</span> ítems
+        </div>
+    </div>
+
+    <!-- TABLA EDITABLE PLANILLA -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse" id="tablaGalpon">
+                <thead class="bg-slate-800 text-slate-200 uppercase text-[11px] font-extrabold tracking-wider border-b border-slate-700">
+                    <tr>
+                        <th class="py-4 px-4 w-16 text-center">N°</th>
+                        <th class="py-4 px-6">Material / Descripción</th>
+                        <th class="py-4 px-4 w-36 text-center">Cantidad</th>
+                        <th class="py-4 px-6">Observaciones</th>
+                        <th class="py-4 px-6 w-32 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    {% for m in materiales %}
+                    <tr class="hover:bg-slate-50/80 transition-colors fila-galpon">
+                        
+                        <!-- N° Secuencial -->
+                        <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">
+                            {{ loop.index }}
+                        </td>
+
+                        <!-- Material / Descripción -->
+                        <td class="py-3 px-6">
+                            <input form="form-actualizar-{{ m.id }}" type="text" name="articulo" value="{{ m.articulo }}" required 
+                                   class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-900 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none transition">
+                        </td>
+
+                        <!-- Cantidad -->
+                        <td class="py-3 px-4 text-center">
+                            <input form="form-actualizar-{{ m.id }}" type="number" step="0.01" name="cantidad" value="{{ m.cantidad }}" 
+                                   class="w-28 text-center border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-black text-emerald-700 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none transition">
+                        </td>
+
+                        <!-- Observaciones -->
+                        <td class="py-3 px-6">
+                            <input form="form-actualizar-{{ m.id }}" type="text" name="observaciones" value="{{ m.observaciones or '' }}" placeholder="Sin observaciones" 
+                                   class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-600 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none transition">
+                        </td>
+
+                        <!-- Botones de Acción -->
+                        <td class="py-3 px-6 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <!-- Formulario de Guardar -->
+                                <form id="form-actualizar-{{ m.id }}" action="{{ url_for('inventario.actualizar', id=m.id) }}" method="POST">
+                                    <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-1.5 rounded-lg text-xs transition" title="Guardar cambios">
+                                        💾 Guardar
+                                    </button>
+                                </form>
+
+                                <!-- Formulario de Eliminar -->
+                                <form action="{{ url_for('inventario.eliminar', id=m.id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este material?');">
+                                    <button type="submit" class="p-1.5 text-slate-300 hover:text-red-500 rounded-lg transition" title="Eliminar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-slate-400">
+                            No hay materiales cargados en el galpón todavía.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
-<!-- Modal para Cargar Material -->
-<dialog id="modalNuevo" class="p-0 rounded-xl shadow-2xl border-0 w-full max-w-md backdrop:bg-black/50">
-    <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-gray-800">Agregar Material al Inventario</h3>
-            <button onclick="document.getElementById('modalNuevo').close()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+<!-- MODAL CARGAR NUEVO MATERIAL -->
+<div id="modalNuevo" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="text-lg font-bold text-slate-800">Agregar Material al Galpón</h3>
+            <button onclick="cerrarModalNuevo()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
         </div>
+        
         <form action="{{ url_for('inventario.agregar') }}" method="POST" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Material / Descripción</label>
-                <input type="text" name="articulo" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Material / Descripción</label>
+                <input type="text" name="articulo" required placeholder="Ej: Carretilla de obra"
+                       class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
             </div>
+            
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Cantidad</label>
-                    <input type="number" step="0.01" name="cantidad" value="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Cantidad Inicial</label>
+                    <input type="number" step="0.01" name="cantidad" value="1" 
+                           class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Observaciones</label>
-                    <input type="text" name="observaciones" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Observaciones</label>
+                    <input type="text" name="observaciones" placeholder="Ej: En buen estado" 
+                           class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none">
                 </div>
             </div>
-            <div class="flex justify-end gap-2 mt-6">
-                <button type="button" onclick="document.getElementById('modalNuevo').close()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg text-sm transition">Cancelar</button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Guardar</button>
+
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="cerrarModalNuevo()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancelar</button>
+                <button type="submit" class="px-4 py-2 text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow">Guardar en Galpón</button>
             </div>
         </form>
     </div>
-</dialog>
+</div>
+
+<script>
+function abrirModalNuevo() {
+    let modal = document.getElementById('modalNuevo');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModalNuevo() {
+    let modal = document.getElementById('modalNuevo');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function filtrarInventario() {
+    let input = document.getElementById("busquedaInventario").value.toLowerCase().trim();
+    let filas = document.getElementsByClassName("fila-galpon");
+    let visibles = 0;
+
+    for (let fila of filas) {
+        let texto = fila.innerText.toLowerCase();
+        if (!input || texto.includes(input)) {
+            fila.style.display = "";
+            visibles++;
+        } else {
+            fila.style.display = "none";
+        }
+    }
+
+    document.getElementById("cantVisibles").innerText = visibles;
+}
+</script>
 {% endblock %}

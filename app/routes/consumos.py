@@ -23,22 +23,25 @@ def registrar_uso(material_id):
         flash(f'No podés usar {cantidad_usada} {material.unidad_medida}. Solo tenés {material.cantidad_disponible} en stock.', 'danger')
         return redirect(url_for('obras.detalle', id=material.obra_id))
 
+    # Valorización real del consumo basado en el precio vigente
+    costo_calculado = cantidad_usada * material.precio_unitario_vigente
+
     registro = RegistroUso(
         obra_material_id=material.id,
         cantidad_usada=cantidad_usada,
+        costo_total=costo_calculado,
         notas=notas
     )
     
     db.session.add(registro)
     db.session.commit()
     
-    flash('Consumo registrado en la obra.', 'success')
+    flash('Consumo registrado y valorizado en la obra.', 'success')
     return redirect(url_for('obras.detalle', id=material.obra_id))
 
 
 @consumos_bp.route('/<int:uso_id>/eliminar', methods=['POST'])
 def eliminar_uso(uso_id):
-    """Elimina un registro específico del historial de usos."""
     registro = RegistroUso.query.get_or_404(uso_id)
     obra_id = registro.obra_material.obra_id
     
@@ -51,10 +54,8 @@ def eliminar_uso(uso_id):
 
 @consumos_bp.route('/material/<int:material_id>/resetear', methods=['POST'])
 def resetear_uso_material(material_id):
-    """Borra TODOS los registros de uso de un material y vuelve el total_usado a 0."""
     material = ObraMaterial.query.get_or_404(material_id)
     
-    # Eliminamos todas las entradas asociadas en RegistroUso
     for registro in material.registros_uso:
         db.session.delete(registro)
         

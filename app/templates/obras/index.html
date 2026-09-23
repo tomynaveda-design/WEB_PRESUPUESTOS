@@ -1,48 +1,92 @@
 {% extends "base.html" %}
+
 {% block content %}
-<!-- ENCABEZADO -->
-<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-    <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Listado de Obras</h1>
-        <p class="text-xs sm:text-sm text-gray-500 mt-1">Seleccioná una obra para gestionar sus materiales y presupuesto.</p>
-    </div>
-    <a href="{{ url_for('obras.crear') }}" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition text-center shadow">
-        + Nueva Obra
-    </a>
-</div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-<!-- GRILLA DE TARJETAS (1 columna en Celular / 2 en Tablet / 3 en Computadora) -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for obra in obras %}
-    <div class="relative bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
-    
-    <!-- BOTÓN DE ELIMINAR (Cruz Roja en la esquina) -->
-    <form action="{{ url_for('obras.eliminar_obra', id=obra.id) }}" method="POST" class="absolute top-3 right-3" onsubmit="return confirm('¿Seguro que querés eliminar esta obra?');">
-        <button type="submit" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="Eliminar Obra">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    <!-- ENCABEZADO DE SECCIÓN Y ACCIONES -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                Gestión de Obras
+                <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full border border-orange-200">
+                    CIESER
+                </span>
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">Seleccioná o gestioná las obras en ejecución y sus presupuestos.</p>
+        </div>
+
+        <!-- Botón Principal apuntando a 'obras.crear' -->
+        <a href="{{ url_for('obras.crear') }}" 
+           class="inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
             </svg>
-        </button>
-    </form>
-
-    <!-- Título y Presupuesto -->
-    <h3 class="text-xl font-bold text-gray-900 pr-8 mb-4">{{ obra.nombre }}</h3>
-    
-    <div class="bg-blue-50 rounded-lg p-4 mb-5 flex-grow border border-blue-100">
-        <p class="text-xs font-semibold text-blue-600 tracking-wide uppercase mb-1">Presupuesto Inicial</p>
-        <p class="text-2xl font-black text-blue-900">
-            $ {{ "{:,.2f}".format(obra.presupuesto_inicial).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-        </p>
+            <span>+ Nueva Obra</span>
+        </a>
     </div>
 
-    <!-- Enlace corregido a obras.detalle -->
-    <a href="{{ url_for('obras.detalle', id=obra.id) }}" ...>Ver Obra</a>
-</div>
-    {% else %}
-    <div class="col-span-full bg-white rounded-xl p-8 text-center text-gray-500 border border-gray-200 shadow-sm">
-        <p class="text-base mb-2">No hay obras registradas aún.</p>
-        <a href="{{ url_for('obras.crear') }}" class="text-blue-600 font-semibold underline text-sm">+ Crear la primera obra</a>
+    <!-- TARJETAS DE OBRAS (GRID) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for obra in obras %}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between border-t-4 border-t-orange-500 group">
+            
+            <div class="p-6 space-y-4">
+                <!-- Titulo de la Obra y Menú -->
+                <div class="flex justify-between items-start gap-2">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                            {{ obra.nombre }}
+                        </h3>
+                        {% if obra.descripcion %}
+                            <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ obra.descripcion }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Formulario de eliminación apuntando a 'obras.eliminar_obra' -->
+                    <form action="{{ url_for('obras.eliminar_obra', id=obra.id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar esta obra?');">
+                        <button type="submit" title="Eliminar obra" class="text-slate-300 hover:text-red-500 p-1 rounded-lg transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Bloque de Presupuesto con Resaltado -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Presupuesto Asignado</span>
+                    <div class="text-2xl font-black text-slate-800">
+                        ${{ "{:,.2f}".format(obra.presupuesto_inicial or 0) }}
+                    </div>
+                </div>
+
+                <!-- Detalle rápido de Materiales registrados -->
+                <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                    <span>Materiales en lista:</span>
+                    <span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                        {{ obra.materiales|length }} ítems
+                    </span>
+                </div>
+            </div>
+
+            <!-- Botón de Ingreso a la Obra -->
+            <div class="p-4 bg-slate-50 border-t border-slate-100">
+                <a href="{{ url_for('obras.detalle', id=obra.id) }}" 
+                   class="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-600 font-bold py-2 px-4 rounded-xl border border-slate-200 hover:border-orange-200 transition-all text-sm shadow-sm">
+                    <span>Ver Panel de la Obra</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </a>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="col-span-full bg-white p-12 text-center rounded-2xl border border-dashed border-slate-300">
+            <p class="text-slate-500 font-medium">No hay obras registradas por el momento.</p>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+
 </div>
 {% endblock %}
